@@ -12,13 +12,19 @@
 <div id="glow"></div>
 <div id="progress"></div>
 
+<!-- Vercel Web Analytics -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
 <nav id="nav">
   <span class="brand">BioPulse</span>
   <button class="lnk active" data-page="hero">Início</button>
   <button class="lnk" data-page="painel">Painel</button>
+  <button class="lnk" data-page="avisos">Avisos</button>
   <button class="lnk" data-page="calendario">Calendário</button>
-  <button class="lnk" data-page="grade">Grade</button>
-  <button class="lnk" data-page="optativas">Optativas</button>
+  <button class="lnk" data-page="grade">Grade &amp; Optativas</button>
   <button class="theme-tg" id="theme-tg" title="Alternar tema" aria-label="Alternar tema">
     <svg id="theme-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" stroke-linecap="round"></path></svg>
   </button>
@@ -356,15 +362,52 @@
 </section>
 </div>
 
-<!-- ============ ESTRUTURA CURRICULAR OBRIGATÓRIA (KANBAN) ============ -->
+
+<!-- ============ PÁGINA: AVISOS E BOLETIMS ============ -->
+<div class="page" id="page-avisos">
+<section>
+  <canvas class="biosoup" id="m-avisos-canvas"></canvas>
+  <div class="wrap">
+    <div class="head compact reveal">
+      <span class="idx">Comunicação Oficial</span>
+      <h2>Avisos do Curso</h2>
+      <p class="lead">Mural de recados oficiais, comunicados do Colegiado, avisos de professores e alterações de salas ou horários.</p>
+    </div>
+
+    <!-- Filtro de Prioridade -->
+    <div class="period-selection-row reveal" style="margin-bottom: var(--s4);">
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <span style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft)">Filtrar Prioridade:</span>
+        <div class="period-chips-group" id="avisos-filter-chips">
+          <button class="regua-chip on" data-aviso-filter="todos">Todos</button>
+          <button class="regua-chip" data-aviso-filter="critico">Crítico</button>
+          <button class="regua-chip" data-aviso-filter="atencao">Atenção</button>
+          <button class="regua-chip" data-aviso-filter="comum">Comum</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feed de Avisos -->
+    <div class="avisos-feed-container reveal" id="avisos-feed-container" style="display: flex; flex-direction: column; gap: 16px;"></div>
+  </div>
+</section>
+</div>
+
+<!-- ============ ESTRUTURA CURRICULAR OBRIGATÓRIA E OPTATIVAS (UNIFICADA COM ORDEM DO PDF) ============ -->
 <div class="page" id="page-grade">
 <section>
   <canvas class="biosoup" id="m-grade-canvas"></canvas>
   <div class="wrap">
     <div class="head compact reveal">
-      <span class="idx">Percurso Curricular Regular</span>
-      <h2>Grade Curricular Obrigatória</h2>
-      <p class="lead">Estrutura oficial do curso de Bacharelado em Biotecnologia do CEFET-MG organizada por períodos. Clique em qualquer matéria para detalhar os créditos, carga horária e ementa oficial.</p>
+      <span class="idx">Estrutura Curricular</span>
+      <h2>Grade Curricular e Optativas</h2>
+      <p class="lead">Consulte a estrutura oficial do curso de Bacharelado em Biotecnologia organizada por períodos na ordem do PDF do CEFET-MG ou acesse o catálogo de optativas.</p>
+    </div>
+
+    <!-- Sub-Navegação da Grade -->
+    <div class="subnav reveal d1" id="grade-subnav" style="margin-bottom: var(--s4);">
+      <button class="on" data-grade-tab="obrigatorias">Percurso Regular (Obrigatórias)</button>
+      <button data-grade-tab="optativas">Disciplinas Optativas (Kanban)</button>
     </div>
 
     <!-- Legenda de Cores por Departamento Gestor -->
@@ -379,262 +422,240 @@
       <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcta-color)"></div><span>DCTA (Ciência e Tecnologia Ambiental)</span></div>
     </div>
 
-    <!-- Kanban Dinâmico de Grade Regular por Períodos (9 colunas) -->
-    <div class="kanban-board reveal" id="grade-kanban-board" style="grid-template-columns: repeat(9, 280px); overflow-x: auto; padding-bottom: 24px; gap: 24px;">
-      
-      <!-- 1º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">1º Período</div>
-        <div class="kanban-card decom-card" data-subj-id="bioe1">
-          <div class="kanban-card-title">Bioestatística I</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept decom">DECOM</span><span>2 Créditos</span></div>
+    <!-- CONTEÚDO 1: OBRIGATÓRIAS (ORDEM EXATA DO PDF OFICIAL) -->
+    <div class="grade-tab-block on" id="grade-tab-obrigatorias">
+      <div class="kanban-board reveal" id="grade-kanban-board" style="grid-template-columns: repeat(9, 280px); overflow-x: auto; padding-bottom: 24px; gap: 24px;">
+        
+        <!-- 1º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">1º Período</div>
+          <div class="kanban-card decom-card" data-subj-id="bioe1">
+            <div class="kanban-card-title">Bioestatística I</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept decom">DECOM</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bcel">
+            <div class="kanban-card-title">Biologia Celular</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card dequi-card" data-subj-id="quim">
+            <div class="kanban-card-title">Química Geral</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dequi">DEQUI</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bfla">
+            <div class="kanban-card-title">Biossegurança e Fundamentos de Laboratório</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dequi-card" data-subj-id="lqui">
+            <div class="kanban-card-title">Laboratório de Química Geral</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-subj-id="cspb">
+            <div class="kanban-card-title">Contexto Social e Profissional da Biotecnologia</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-subj-id="fite">
+            <div class="kanban-card-title">Filosofia da Tecnologia</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-subj-id="paor">
+            <div class="kanban-card-title">Psicologia Aplicada às Organizações</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
         </div>
-        <div class="kanban-card debio-card" data-subj-id="bcel">
-          <div class="kanban-card-title">Biologia Celular</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+
+        <!-- 2º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">2º Período</div>
+          <div class="kanban-card decom-card" data-subj-id="bioe2">
+            <div class="kanban-card-title">Bioestatística II</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept decom">DECOM</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="hghu">
+            <div class="kanban-card-title">Histologia Geral Humana</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card dequi-card" data-subj-id="epco">
+            <div class="kanban-card-title">Estrutura e Propriedades dos Compostos Orgânicos</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dequi">DEQUI</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="srbi">
+            <div class="kanban-card-title">Segurança e Regulamentação em Biotecnologia</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-subj-id="soci">
+            <div class="kanban-card-title">Introdução à Sociologia</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsa-card" data-subj-id="mcie">
+            <div class="kanban-card-title">Metodologia Científica</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsa">DCSA</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="mger">
+            <div class="kanban-card-title">Microbiologia Geral</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
         </div>
-        <div class="kanban-card dequi-card" data-subj-id="quim">
-          <div class="kanban-card-title">Química Geral</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dequi">DEQUI</span><span>4 Créditos</span></div>
+
+        <!-- 3º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">3º Período</div>
+          <div class="kanban-card dcsf-card" data-subj-id="bioe">
+            <div class="kanban-card-title">Bioética</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bioq">
+            <div class="kanban-card-title">Bioquímica Básica</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="gen">
+            <div class="kanban-card-title">Genética Básica e Citogenética</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="imic">
+            <div class="kanban-card-title">Instrumentação em Microbiologia</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="imb">
+            <div class="kanban-card-title">Imunologia Básica</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsa-card" data-subj-id="mpes">
+            <div class="kanban-card-title">Metodologia da Pesquisa</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsa">DCSA</span><span>2 Créditos</span></div>
+          </div>
         </div>
-        <div class="kanban-card debio-card" data-subj-id="bfla">
-          <div class="kanban-card-title">Biossegurança e Fundamentos de Laboratório</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+
+        <!-- 4º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">4º Período</div>
+          <div class="kanban-card debio-card" data-subj-id="fghu">
+            <div class="kanban-card-title">Fisiologia Geral Humana</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card dequi-card" data-subj-id="qate">
+            <div class="kanban-card-title">Química Analítica Teórica</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dequi-card" data-subj-id="qapr">
+            <div class="kanban-card-title">Química Analítica Prática</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="ima">
+            <div class="kanban-card-title">Imunologia Aplicada</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bap">
+            <div class="kanban-card-title">Bioquímica Aplicada</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="genap">
+            <div class="kanban-card-title">Genética Aplicada</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
         </div>
-        <div class="kanban-card dequi-card" data-subj-id="lqui">
-          <div class="kanban-card-title">Laboratório de Química Geral</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
+
+        <!-- 5º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">5º Período</div>
+          <div class="kanban-card debio-card" data-subj-id="farm">
+            <div class="kanban-card-title">Fundamentos em Farmacologia</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card decom-card" data-subj-id="bioinf">
+            <div class="kanban-card-title">Introdução à Bioinformática</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept decom">DECOM</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="mveg">
+            <div class="kanban-card-title">Morfofisiologia Vegetal</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bmol">
+            <div class="kanban-card-title">Biologia Molecular Aplicada</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
         </div>
-        <div class="kanban-card dcsf-card" data-subj-id="cspb">
-          <div class="kanban-card-title">Contexto Social e Profissional da Biotecnologia</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+
+        <!-- 6º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">6º Período</div>
+          <div class="kanban-card debio-card" data-subj-id="paras">
+            <div class="kanban-card-title">Parasitologia Aplicada</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bveg">
+            <div class="kanban-card-title">Biotecnologia Vegetal</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bani">
+            <div class="kanban-card-title">Biotecnologia Animal</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card df-card" data-subj-id="biof">
+            <div class="kanban-card-title">Biofísica</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept df">DF</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="enme">
+            <div class="kanban-card-title">Engenharia Metabólica</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
         </div>
-        <div class="kanban-card dcsf-card" data-subj-id="fite">
-          <div class="kanban-card-title">Filosofia da Tecnologia</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+
+        <!-- 7º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">7º Período</div>
+          <div class="kanban-card debio-card" data-subj-id="nano">
+            <div class="kanban-card-title">Nanobiotecnologia</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="bhum">
+            <div class="kanban-card-title">Biotecnologia Humana</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcta-card" data-subj-id="etox">
+            <div class="kanban-card-title">Ecotoxicologia</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dcta">DCTA</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="tfbi">
+            <div class="kanban-card-title">Tecnologia de Fermentações e Bioprocessos</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
         </div>
-        <div class="kanban-card dcsf-card" data-subj-id="paor">
-          <div class="kanban-card-title">Psicologia Aplicada às Organizações</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+
+        <!-- 8º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">8º Período</div>
+          <div class="kanban-card debio-card" data-subj-id="gpge">
+            <div class="kanban-card-title">Genômica e Pós-Genômica</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsa-card" data-subj-id="empr_reg">
+            <div class="kanban-card-title">Empreendedorismo - Modelo e Plano de Negócios</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dcsa">DCSA</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="tcc1">
+            <div class="kanban-card-title">Atividade de TCC I</div>
+            <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept debio">DEBIO</span><span>1 Crédito</span></div>
+          </div>
         </div>
+
+        <!-- 9º Período -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">9º Período</div>
+          <div class="kanban-card dcsa-card" data-subj-id="estag_sup">
+            <div class="kanban-card-title">Atividade de Estágio Supervisionado</div>
+            <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept dcsa">DCSA</span><span>1 Crédito</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-subj-id="tcc2">
+            <div class="kanban-card-title">Atividade de TCC II</div>
+            <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept debio">DEBIO</span><span>1 Crédito</span></div>
+          </div>
+        </div>
+
       </div>
-
-      <!-- 2º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">2º Período</div>
-        <div class="kanban-card decom-card" data-subj-id="bioe2">
-          <div class="kanban-card-title">Bioestatística II</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept decom">DECOM</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="hghu">
-          <div class="kanban-card-title">Histologia Geral Humana</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card dequi-card" data-subj-id="epco">
-          <div class="kanban-card-title">Estrutura e Propriedades dos Compostos Orgânicos</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dequi">DEQUI</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="srbi">
-          <div class="kanban-card-title">Segurança e Regulamentação em Biotecnologia</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card dcsf-card" data-subj-id="soci">
-          <div class="kanban-card-title">Introdução à Sociologia</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card dcsa-card" data-subj-id="mcie">
-          <div class="kanban-card-title">Metodologia Científica</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsa">DCSA</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="mger">
-          <div class="kanban-card-title">Microbiologia Geral</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-      </div>
-
-      <!-- 3º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">3º Período</div>
-        <div class="kanban-card dcsf-card" data-subj-id="bioe">
-          <div class="kanban-card-title">Bioética</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="bioq">
-          <div class="kanban-card-title">Bioquímica Básica</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="gen">
-          <div class="kanban-card-title">Genética Básica e Citogenética</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="imic">
-          <div class="kanban-card-title">Instrumentação em Microbiologia</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="imb">
-          <div class="kanban-card-title">Imunologia Básica</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card dcsa-card" data-subj-id="mpes">
-          <div class="kanban-card-title">Metodologia da Pesquisa</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsa">DCSA</span><span>2 Créditos</span></div>
-        </div>
-      </div>
-
-      <!-- 4º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">4º Período</div>
-        <div class="kanban-card debio-card" data-subj-id="fghu">
-          <div class="kanban-card-title">Fisiologia Geral Humana</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card dequi-card" data-subj-id="qate">
-          <div class="kanban-card-title">Química Analítica Teórica</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card dequi-card" data-subj-id="qapr">
-          <div class="kanban-card-title">Química Analítica Prática</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="ima">
-          <div class="kanban-card-title">Imunologia Aplicada</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="bap">
-          <div class="kanban-card-title">Bioquímica Aplicada</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="genap">
-          <div class="kanban-card-title">Genética Aplicada</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-      </div>
-
-      <!-- 5º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">5º Período</div>
-        <div class="kanban-card debio-card" data-subj-id="farm">
-          <div class="kanban-card-title">Fundamentos em Farmacologia</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card decom-card" data-subj-id="bioinf">
-          <div class="kanban-card-title">Introdução à Bioinformática</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept decom">DECOM</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="mveg">
-          <div class="kanban-card-title">Morfofisiologia Vegetal</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="bmol">
-          <div class="kanban-card-title">Biologia Molecular Aplicada</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-      </div>
-
-      <!-- 6º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">6º Período</div>
-        <div class="kanban-card debio-card" data-subj-id="paras">
-          <div class="kanban-card-title">Parasitologia Aplicada</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="bveg">
-          <div class="kanban-card-title">Biotecnologia Vegetal</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="bani">
-          <div class="kanban-card-title">Biotecnologia Animal</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card df-card" data-subj-id="biof">
-          <div class="kanban-card-title">Biofísica</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept df">DF</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="enme">
-          <div class="kanban-card-title">Engenharia Metabólica</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-      </div>
-
-      <!-- 7º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">7º Período</div>
-        <div class="kanban-card debio-card" data-subj-id="nano">
-          <div class="kanban-card-title">Nanobiotecnologia</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="bhum">
-          <div class="kanban-card-title">Biotecnologia Humana</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card dcta-card" data-subj-id="etox">
-          <div class="kanban-card-title">Ecotoxicologia</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dcta">DCTA</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="tfbi">
-          <div class="kanban-card-title">Tecnologia de Fermentações e Bioprocessos</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
-        </div>
-      </div>
-
-      <!-- 8º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">8º Período</div>
-        <div class="kanban-card debio-card" data-subj-id="gpge">
-          <div class="kanban-card-title">Genômica e Pós-Genômica</div>
-          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
-        </div>
-        <div class="kanban-card dcsa-card" data-subj-id="empr_reg">
-          <div class="kanban-card-title">Empreendedorismo - Modelo e Plano de Negócios</div>
-          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dcsa">DCSA</span><span>4 Créditos</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="tcc1">
-          <div class="kanban-card-title">Atividade de TCC I</div>
-          <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept debio">DEBIO</span><span>1 Crédito</span></div>
-        </div>
-      </div>
-
-      <!-- 9º Período -->
-      <div class="kanban-col">
-        <div class="kanban-col-header">9º Período</div>
-        <div class="kanban-card dcsa-card" data-subj-id="estag_sup">
-          <div class="kanban-card-title">Atividade de Estágio Supervisionado</div>
-          <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept dcsa">DCSA</span><span>1 Crédito</span></div>
-        </div>
-        <div class="kanban-card debio-card" data-subj-id="tcc2">
-          <div class="kanban-card-title">Atividade de TCC II</div>
-          <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept debio">DEBIO</span><span>1 Crédito</span></div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-</div>
-
-<!-- ============ OPTATIVAS (KANBAN) ============ -->
-<div class="page" id="page-optativas">
-<section>
-  <canvas class="biosoup" id="m-opt"></canvas>
-  <div class="wrap">
-    <div class="head compact reveal">
-      <span class="idx">Estrutura Curricular Flexível</span>
-      <h2>Disciplinas Optativas Oficiais</h2>
-      <p class="lead">Quadro Kanban de dependências acadêmicas do curso de Biotecnologia do CEFET-MG. Clique em um card para detalhar a ementa, créditos e pré-requisitos oficiais.</p>
     </div>
 
-    <div class="dept-legend reveal">
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--debio-color)"></div><span>DEBIO (Ciências Biológicas)</span></div>
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dequi-color)"></div><span>DEQUI (Química)</span></div>
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--decom-color)"></div><span>DECOM (Computação)</span></div>
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--df-color)"></div><span>DF (Física)</span></div>
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--deteq-color)"></div><span>DETEQ (Engenharia Química)</span></div>
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcsa-color)"></div><span>DCSA (Ciências Sociais Aplicadas)</span></div>
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcsf-color)"></div><span>DCSF (Ciências Sociais e Filosofia)</span></div>
-      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcta-color)"></div><span>DCTA (Ciência e Tecnologia Ambiental)</span></div>
-    </div>
-
-    <div class="grid-sched-container">
+    <!-- CONTEÚDO 2: OPTATIVAS (KANBAN FLEXÍVEL) -->
+    <div class="grade-tab-block" id="grade-tab-optativas">
       <div class="kanban-board reveal" id="opt-kanban-board">
         <div class="kanban-col">
           <div class="kanban-col-header">Livre (0 Requisitos)</div>
@@ -691,7 +712,7 @@
             <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept deteq">DETEQ</span><span>4 Créditos</span></div>
           </div>
           <div class="kanban-card deteq-card" data-opt-id="tdv">
-            <div class="kanban-card-title">Tecnologia de Desenv. de Vacinas</div>
+            <div class="kanban-card-title">Tecnologia de Desenvolvimento de Vacinas</div>
             <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept deteq">DETEQ</span><span>2 Créditos</span></div>
           </div>
           <div class="kanban-card debio-card" data-opt-id="prot">
@@ -701,6 +722,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </section>
 </div>
@@ -953,9 +975,10 @@
   </div>
 </footer>
 
-<!-- ============ SCRIPTS — ORDEM OBRIGATÓRIA: data -> particles -> app ============ -->
+<!-- ============ SCRIPTS — ORDEM OBRIGATÓRIA ============ -->
 <script src="data.js"></script>
 <script src="particles.js"></script>
+<script src="avisos.js"></script> <!-- NOVO ARQUIVO DE AVISOS -->
 <script src="app.js"></script>
 
 </body></html>
