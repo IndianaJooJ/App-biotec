@@ -1,15 +1,27 @@
 /* ============================================================
-   data.js — Dados estáticos do BioPulse
-   Expõe tudo em window.BP_DATA (lido por app.js)
-   NÃO contém lógica. Apenas dados. Raramente precisa ser editado.
+   DATA.JS — Dados Estáticos e Matrizes Curriculares (BioPulse)
+   
+   ÍNDICE E ESTRUTURA DO ARQUIVO:
+   1. TOTAL DE HORAS DO CURSO (Linha 16)
+   2. MATRIZ CURRICULAR DO 1º PERÍODO / SEM1 (Linha 20)
+   3. MATRIZ CURRICULAR DOS PERÍODOS 2 AO 9 / SEMS (Linha 32)
+   4. LISTA DE OPTATIVAS PARA O PAINEL (Linha 105)
+   5. GRAFO DE PRÉ-REQUISITOS (Nós e Arestas) (Linha 118)
+   6. CARGA HORÁRIA DAS OPTATIVAS DO PLANEJADOR (Linha 140)
+   7. GRADE DE HORÁRIOS PADRÃO (1º Período) (Linha 148)
+   8. DIAS LETIVOS OFICIAIS / DELIBERAÇÃO CGRAD (Linha 163)
+   9. CATÁLOGO DE EMENTAS DAS OPTATIVAS (Linha 167)
+   10. BASE DE DADOS DO CALENDÁRIO ACADÊMICO (Linha 185)
+   11. EXPOSIÇÃO GLOBAL WINDOW.BP_DATA (Linha 280)
    ============================================================ */
+
 (function () {
   "use strict";
 
-  /* ---- Total de horas/aula do curso ---- */
+  /* ---- 1. Total de horas/aula do curso ---- */
   var TOTAL_HA = 3960;
 
-/* ---- 1º período (conforme ordem e matriz oficial do CEFET-MG) ---- */
+  /* ---- 2. 1º período (Ordem e matriz oficial do PDF do CEFET-MG) ---- */
   var SEM1 = [
     { cod: 'G00BIOE1.01', nome: 'Bioestatística I', ch: 30, dept: 'decom' },
     { cod: 'G00BCEL0.01', nome: 'Biologia Celular', ch: 60, dept: 'debio' },
@@ -21,7 +33,7 @@
     { cod: 'G00PAOR0.01', nome: 'Psicologia Aplicada às Organizações', ch: 30, dept: 'dcsf' }
   ];
 
-  /* ---- Períodos 2 a 9: [Nome, CH, Código, Departamento] ---- */
+  /* ---- 3. Períodos 2 a 9: [Nome, CH, Código, Departamento] (Ordem do PDF) ---- */
   var SEMS = {
     '2': [
       ['Bioestatística II', 30, 'G00BIOE2.01', 'decom'],
@@ -38,21 +50,24 @@
       ['Genética Básica e Citogenética', 60, 'G00GBC10.01', 'debio'],
       ['Instrumentação em Microbiologia', 30, 'G00IMIC0.01', 'debio'],
       ['Imunologia Básica', 60, 'G00IBAS0.01', 'debio'],
-      ['Metodologia da Pesquisa', 30, 'G00MPES0.05', 'dcsa']
+      ['Metodologia da Pesquisa', 30, 'G00MPES0.05', 'dcsa'],
+      ['Optativas', 30, 'OPT', 'deteq']
     ],
     '4': [
       ['Fisiologia Geral Humana', 60, 'G00FGHU0.01', 'debio'],
       ['Química Analítica Teórica', 30, 'G00QATE0.01', 'dequi'],
       ['Química Analítica Prática', 30, 'G00QAPR0.01', 'dequi'],
       ['Imunologia Aplicada', 30, 'G00IAPL0.01', 'debio'],
-      ['Bioquímica Aplicada', 60, 'G00BAPL0.01', 'debio'],
-      ['Genética Aplicada', 60, 'G00GEAP0.01', 'debio']
+      ['Bioquímica Aplicada', 60, 'G00BQAP0.01', 'debio'],
+      ['Genética Aplicada', 60, 'G00GEAP0.01', 'debio'],
+      ['Optativas', 60, 'OPT', 'deteq']
     ],
     '5': [
       ['Fundamentos em Farmacologia', 60, 'G00FFAR0.01', 'debio'],
       ['Introdução à Bioinformática', 60, 'G00IBIO0.01', 'decom'],
       ['Morfofisiologia Vegetal', 60, 'G00MVEG0.01', 'debio'],
-      ['Biologia Molecular Aplicada', 60, 'G00BMAP0.01', 'debio']
+      ['Biologia Molecular Aplicada', 60, 'G00BMAP0.01', 'debio'],
+      ['Optativas', 60, 'OPT', 'deteq']
     ],
     '6': [
       ['Parasitologia Aplicada', 60, 'G00PAPL0.01', 'debio'],
@@ -65,20 +80,23 @@
       ['Nanobiotecnologia', 30, 'G00NBIO0.01', 'debio'],
       ['Biotecnologia Humana', 60, 'G00BHUM0.01', 'debio'],
       ['Ecotoxicologia', 60, 'G00ETOX0.01', 'dcta'],
-      ['Tecnologia de Fermentações e Bioprocessos', 60, 'G00TFBI0.01', 'debio']
+      ['Tecnologia de Fermentações e Bioprocessos', 60, 'G00TFBI0.01', 'debio'],
+      ['Optativas', 60, 'OPT', 'deteq']
     ],
     '8': [
       ['Genômica e Pós-Genômica', 30, 'G00GPGE0.01', 'debio'],
-      ['Empreendedorismo - Modelo e Plano de Negócios', 60, 'G00EMPN0.01', 'dcsa'],
-      ['Atividade de TCC I', 15, 'G00ATCC1.03', 'debio']
+      ['Empreendedorismo – Modelo e Plano de Negócios', 60, 'G00EMPN0.01', 'dcsa'],
+      ['Atividade de TCC I', 15, 'G00ATCC1.03', 'debio'],
+      ['Optativas', 150, 'OPT', 'deteq']
     ],
     '9': [
       ['Atividade de Estágio Supervisionado', 15, 'G00AESU0.02', 'dcsa'],
-      ['Atividade de TCC II', 15, 'G00ATCC2.03', 'debio']
+      ['Atividade de TCC II', 15, 'G00ATCC2.03', 'debio'],
+      ['Optativas', 60, 'OPT', 'deteq']
     ]
   };
 
-  /* ---- Lista de optativas (dropdown da aba Notas) ---- */
+  /* ---- 4. Lista de optativas (dropdown da aba Notas) ---- */
   var OPTATIVAS = [
     'Biomimética (30 h/a)', 'Inglês Instrumental I (30 h/a)', 'Inglês Instrumental II (30 h/a)',
     'Biotelemetria (60 h/a)', 'Biotecnologia Médica (30 h/a)', 'Proteínas Recombinantes (30 h/a)',
@@ -88,7 +106,7 @@
     'Interação Patógeno-Hospedeiro (60 h/a)'
   ];
 
-  /* ---- Nós do grafo de pré-requisitos ---- */
+  /* ---- 5. Nós do grafo de pré-requisitos ---- */
   var GNODES = [
     { id: 'bioq', n: 'Bioquímica Básica', p: 3, row: 0 }, { id: 'gen', n: 'Genética Básica', p: 3, row: 1 },
     { id: 'imb', n: 'Imunologia Básica', p: 3, row: 2 }, { id: 'fis', n: 'Fisiologia Humana', p: 4, row: 0 },
@@ -112,38 +130,38 @@
     ['imb', 'ima'], ['ing1', 'ing2']
   ];
 
-  /* ---- Carga horária das optativas do planejador (por nome do nó) ---- */
+  /* ---- 6. Carga horária das optativas do planejador (por nome do nó) ---- */
   var CH_BY_NAME = {
     'Biomimética': 30, 'Inglês Instrumental I': 30, 'Inglês Instrumental II': 30, 'Biotelemetria': 60,
     'Biotec. Médica': 30, 'Proteínas Recomb.': 30, 'Eng. Genética': 30, 'Farmacogenética': 30,
     'Biotec. Farmacêutica': 60, 'Empreendedorismo': 60
   };
 
-  /* ---- Grade de horários do 1º período ---- */
+  /* ---- 7. Grade de horários do 1º período ---- */
   var SCHED = {
     head: ['Horário', 'SEG · NS', 'TER · NS', 'QUA · NS', 'QUI · NG', 'SEX · NS'],
     rows: [
       { t: '19:00–20:40', cells: [
-        { c: 'G00QUIM1.01', n: 'Química Teórica', p: 'Claudinei Calado', rk: 'seg1', rd: '422', cp: 'ns' },
-        { c: 'G00PAOR0.01', n: 'Psicologia Apl. às Organizações', p: 'Thiago Nunes', rk: 'ter1', rd: '422', cp: 'ns' },
+        { c: 'G00QUIM1.01', n: 'Química Teórica', p: 'Claudinei Calado', rk: 'seg1', rd: '421', cp: 'ns' },
+        { c: 'G00PAOR0.01', n: 'Psicologia Apl. às Organizações', p: 'Thiago Nunes', rk: 'ter1', rd: '421', cp: 'ns' },
         { c: 'G00BCEL0.01 / G00BFLA0.01', n: 'Bio. Celular Prát. (T1) / Biosseg. Prát. (T2)', p: 'L. M. Costa Moreira / M. M. Drumond', rk: 'qua1', rd: 'Lab 208 / 209', cp: 'ns' },
         { c: 'G00LQUI1.01 / G00BIOE1.01', n: 'Lab. Química (T1) / Bioestatística I (T2)', p: 'Eudes Lourenço / M. M. Drumond', rk: 'qui1', rd: 'Lab 205 / 121A', cp: 'ng' },
-        { c: 'G00QUIM1.01', n: 'Química Teórica', p: 'Claudinei Calado', rk: 'sex1', rd: '422', cp: 'ns' }
+        { c: 'G00QUIM1.01', n: 'Química Teórica', p: 'Claudinei Calado', rk: 'sex1', rd: '421', cp: 'ns' }
       ] },
       { t: '20:50–22:30', cells: [
-        { c: 'G00BCEL0.01', n: 'Biologia Celular Teórica', p: 'Thiago Cotta Ribeiro', rk: 'seg2', rd: '422', cp: 'ns' },
-        { c: 'G00CSPB0.01', n: 'Contexto Social e Prof. da Biotec.', p: 'Leila S. Ortega / Raquel C. S. Chagas', rk: 'ter2', rd: '422', cp: 'ns' },
+        { c: 'G00BCEL0.01', n: 'Biologia Celular Teórica', p: 'Thiago Cotta Ribeiro', rk: 'seg2', rd: '421', cp: 'ns' },
+        { c: 'G00CSPB0.01', n: 'Contexto Social e Prof. da Biotec.', p: 'Leila S. Ortega / Raquel C. S. Chagas', rk: 'ter2', rd: '421', cp: 'ns' },
         { c: 'G00BCEL0.01 / G00BFLA0.01', n: 'Bio. Celular Prát. (T2) / Biosseg. Prát. (T1)', p: 'L. M. Costa Moreira / M. M. Drumond', rk: 'qua2', rd: 'Lab 208 / 209', cp: 'ns' },
         { c: 'G00LQUI1.01 / G00BIOE1.01', n: 'Lab. Química (T2) / Bioestatística I (T1)', p: 'Eudes Lourenço / M. M. Drumond', rk: 'qui2', rd: 'Lab 205 / 121A', cp: 'ng' },
-        { c: 'G00FITE0.01', n: 'Filosofia da Tecnologia', p: 'Huener Silva Gonçalves', rk: 'sex2', rd: '422', cp: 'ns' }
+        { c: 'G00FITE0.01', n: 'Filosofia da Tecnologia', p: 'Huener Silva Gonçalves', rk: 'sex2', rd: '421', cp: 'ns' }
       ] }
     ]
   };
 
-  /* ---- Dias letivos oficiais por mês (Deliberação CGRAD 25/2026) ---- */
+  /* ---- 8. Dias letivos oficiais por mês (Deliberação CGRAD 25/2026) ---- */
   var MONTHLY_DAYS_OFICIAL = { 7: 0, 8: 22, 9: 25, 10: 25, 11: 22, 12: 6 };
 
-  /* ---- Catálogo de ementas das optativas (modal do Kanban) ---- */
+  /* ---- 9. Catálogo de ementas das optativas (modal do Kanban) ---- */
   var OPT_CATALOGUE = {
     biom: { code: 'G00BIOM0.01', title: 'Biomimética', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Nenhum', desc: 'Princípios e leis de organização dos sistemas biológicos como modelos para engenharia e design. Estudo de superfícies funcionais, biossensores mecânicos e estruturas adaptativas inspiradas na fauna e flora.' },
     empr: { code: 'G00EOC00.01', title: 'Empreendedorismo para Organizações Criativas', dept: 'DCSA', hours: '60 h/a', credits: '4', color: '--dcsa-color', prereqs: 'Nenhum', desc: 'Gestão de negócios voltados às indústrias biotecnológicas e criativas. Elaboração de planos de negócios, captação de recursos de inovação tecnológica, estruturação de startups (spin-offs acadêmicas) e propriedade intelectual.' },
@@ -160,7 +178,7 @@
     prot: { code: 'G00PRR00.01', title: 'Proteínas Recombinantes', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Bioquímica Aplicada (G00BQA) + Biologia Molecular Aplicada (G00BMA)', desc: 'Desenvolvimento de vetores de expressão e transformação em sistemas hospedeiros (E. coli, leveduras e células de mamíferos). Estratégias de engenharia de proteínas por evolução dirigida para aumento de estabilidade catalítica.' }
   };
 
-  /* ---- Calendário acadêmico 2026.2 (CGRAD 25/2026) ---- */
+  /* ---- 10. Calendário acadêmico 2026.2 (CGRAD 25/2026) ---- */
   var CALENDAR_DB = [
     { date: '2026-08-01', title: 'Férias Escolares (Término)', type: 'Feriados & Recessos', oficial: true, desc: 'Fim do recesso escolar de inverno decretado pelo Colegiado de Ensino, Pesquisa e Extensão (CEPE).' },
     { date: '2026-08-02', title: '2ª Fase de Matrícula (Término)', type: 'Matrículas & Ajustes', oficial: true, desc: 'Fim do prazo para os alunos veteranos solicitarem reserva de vagas extras diretamente pelo SIGAA.' },
@@ -255,7 +273,7 @@
     { date: '2026-12-31', title: 'Recesso de Ano Novo', type: 'Feriados & Recessos', oficial: true, desc: 'Véspera de Confraternização Universal. Campus inativo.' }
   ];
 
-  /* ---- Exposição global ---- */
+  /* ---- 11. Exposição Global do Módulo ---- */
   window.BP_DATA = {
     TOTAL_HA: TOTAL_HA,
     SEM1: SEM1,
@@ -270,4 +288,3 @@
     CALENDAR_DB: CALENDAR_DB
   };
 })();
-
