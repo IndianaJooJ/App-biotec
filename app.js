@@ -1,0 +1,978 @@
+/* ============================================================
+   app.js — Lógica do BioPulse (Versão Corrigida e Unificada)
+   Depende de: window.BP_DATA (data.js) e window.BP_PARTICLES (particles.js)
+   Ordem de carga no index.html: data.js -> particles.js -> app.js
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function () {
+  "use strict";
+
+  /* ---- Pontes com os módulos externos ---- */
+  var D = window.BP_DATA || {};
+  var P = window.BP_PARTICLES || { init: function () {}, resizeAll: function () {}, buildDNA: function () {} };
+
+  /* ---- Dados (vindos de data.js) ---- */
+  var SEM1 = D.SEM1, SEMS = D.SEMS, OPTATIVAS = D.OPTATIVAS, TOTAL_HA = D.TOTAL_HA;
+  var GNODES = D.GNODES, GEDGES = D.GEDGES, CH_BY_NAME = D.CH_BY_NAME;
+  var MONTHLY_DAYS_OFICIAL = D.MONTHLY_DAYS_OFICIAL, OPT_CATALOGUE = D.OPT_CATALOGUE, CALENDAR_DB = D.CALENDAR_DB;
+
+  /* ---- Store / util ---- */
+  var store = { get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+  var saveBtn = document.getElementById('btnsave'), saveT;
+  function flashSave() { if (saveBtn) { saveBtn.classList.add('show'); clearTimeout(saveT); saveT = setTimeout(function () { saveBtn.classList.remove('show'); }, 1400); } }
+  function esc(s) { return ('' + (s == null ? '' : s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  /* ===== VERSIONAMENTO / MIGRAÇÃO ===== */
+  var DATA_VERSION = 3;
+  (function migrateData() {
+    var v = parseInt(store.get('bp_dataversion', 1), 10) || 1;
+    if (v < 3) {
+      var oldGrades = store.get('bp_grades', null);
+      var evals = store.get('bp_evals', {});
+      if (oldGrades) {
+        Object.keys(oldGrades).forEach(function (k) {
+          var g = oldGrades[k];
+          if (g !== undefined && g !== '' && !isNaN(parseFloat(g)) && !evals[k]) { evals[k] = [{ nome: 'Nota', data: '', nota: g }]; }
+        });
+        store.set('bp_evals', evals);
+      }
+    }
+    if (v < DATA_VERSION) { store.set('bp_dataversion', DATA_VERSION); }
+  })();
+
+  /* ===== TEMA ===== */
+  var theme = store.get('bp_theme', 'light');
+  function applyTheme(t) { document.body.classList.toggle('theme-dark', t === 'dark'); var ico = document.getElementById('theme-ico'); if (ico) { if (t === 'dark') { ico.innerHTML = '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" fill="currentColor" stroke="none"/>'; } else { ico.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" stroke-linecap="round"/>'; } } }
+  applyTheme(theme);
+  var themeTg = document.getElementById('theme-tg');
+  if (themeTg) { themeTg.addEventListener('click', function () { theme = (theme === 'dark' ? 'light' : 'dark'); store.set('bp_theme', theme); applyTheme(theme); }); }
+
+  /* ===== TOOLS FAB ===== */
+  var tools = document.getElementById('tools');
+  var toolsToggle = document.getElementById('tools-toggle');
+  if (toolsToggle) { toolsToggle.addEventListener('click', function (e) { e.stopPropagation(); tools.classList.toggle('open'); }); }
+  document.addEventListener('click', function (e) { if (tools && !tools.contains(e.target)) tools.classList.remove('open'); });
+
+  /* ===== GLOW + PROGRESS ===== */
+  var glow = document.getElementById('glow'), mx = innerWidth / 2, my = innerHeight / 2, cx = mx, cy = my;
+  addEventListener('mousemove', function (e) { mx = e.clientX; my = e.clientY; });
+  (function loop() { if (glow) { cx += (mx - cx) * .12; cy += (my - cy) * .12; glow.style.left = cx + 'px'; glow.style.top = cy + 'px'; } requestAnimationFrame(loop); })();
+  addEventListener('scroll', function () { var h = document.documentElement, m = h.scrollHeight - h.clientHeight; var prog = document.getElementById('progress'); if (prog) prog.style.width = (m > 0 ? h.scrollTop / m * 100 : 0) + '%'; }, { passive: true });
+
+  /* ===== REVEAL ===== */
+  var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }); }, { threshold: .12 });
+  function observeReveals() { document.querySelectorAll('.reveal:not(.in)').forEach(function (el) { io.observe(el); }); }
+  observeReveals();
+
+  /* ===== PARTÍCULAS (via módulo) + DNA ===== */
+  ['soup-hero', 'soup-sci', 'soup-firms', 'soup-cefet', 'soup-footer', 'm-cal'].forEach(function (id) { P.init(document.getElementById(id), { mode: 'soup' }); });
+  ['m-hist', 'm-cefet', 'm-struct', 'm-areas', 'm-infos', 'm-trilha', 'm-opt', 'm-painel'].forEach(function (id) { P.init(document.getElementById(id), { mode: 'mol' }); });
+  P.buildDNA();
+
+  /* ===== NAVEGAÇÃO DE PÁGINAS ===== */
+  var links = document.querySelectorAll('nav button.lnk'), pages = document.querySelectorAll('.page');
+  links.forEach(function (b) { b.addEventListener('click', function () { var p = b.getAttribute('data-page'); links.forEach(function (x) { x.classList.toggle('active', x === b); }); pages.forEach(function (pg) { pg.classList.toggle('on', pg.id === 'page-' + p); }); scrollTo({ top: 0, behavior: 'smooth' }); observeReveals(); setTimeout(function () { P.resizeAll(); if (p === 'painel') renderVisao(); if (p === 'calendario') renderCalendario(); }, 90); }); });
+
+  /* Inicializa as partículas de fundo do canvas da aba "Grade" */
+  P.init(document.getElementById('m-grade-canvas'), { mode: 'mol' });
+
+  /* ===== GRAFO DE PRÉ-REQUISITOS ===== */
+  var gselected = null, COLX = {};
+  function layoutGraph() { var cv = document.getElementById('graph-canvas'); if (!cv) return; var w = cv.clientWidth, h = cv.clientHeight; if (w < 10) { setTimeout(layoutGraph, 120); return; } var minP = 3, maxP = 8, padX = 86, padY = 72; cv.querySelectorAll('.gnode').forEach(function (n) { n.remove(); }); var byP = {}; GNODES.forEach(function (nd) { (byP[nd.p] = byP[nd.p] || []).push(nd); }); COLX = {}; Object.keys(byP).forEach(function (p) { var arr = byP[p].sort(function (a, b) { return a.row - b.row; }); var x = padX + (w - 2 * padX) * ((p - minP) / (maxP - minP)); COLX[p] = x; var n = arr.length; arr.forEach(function (nd, i) { nd.x = x; nd.y = (n === 1) ? h / 2 : padY + (h - 2 * padY) * (i / (n - 1)); }); }); GNODES.forEach(function (nd) { var el = document.createElement('button'); el.className = 'gnode'; el.setAttribute('data-id', nd.id); el.style.left = nd.x + 'px'; el.style.top = nd.y + 'px'; el.innerHTML = nd.n + '<small>' + nd.p + 'º' + (nd.opt ? ' · optativa' : '') + '</small>'; el.addEventListener('click', function () { selectGraph(nd.id); }); cv.appendChild(el); }); drawGraphEdges(); applyGraphSel(); }
+  function drawGraphEdges() { var cv = document.getElementById('graph-canvas'); var h = cv ? cv.clientHeight : 780; var svg = document.getElementById('graph-svg'); var g = ''; Object.keys(COLX).forEach(function (p) { var x = COLX[p]; g += '<line x1="' + x + '" y1="44" x2="' + x + '" y2="' + (h - 22) + '" stroke="rgba(15,168,119,.10)" stroke-width="1" stroke-dasharray="2 8"/>'; g += '<text x="' + x + '" y="30" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11.5" font-weight="700" fill="rgba(15,168,119,.55)">' + p + 'º</text>'; }); function pos(id) { for (var i = 0; i < GNODES.length; i++) if (GNODES[i].id === id) return GNODES[i]; return null; } GEDGES.forEach(function (e) { var a = pos(e[0]), b = pos(e[1]); if (!a || !b) return; var dx = (b.x - a.x) * 0.45; g += '<path d="M' + a.x + ' ' + a.y + ' C' + (a.x + dx) + ' ' + a.y + ',' + (b.x - dx) + ' ' + b.y + ',' + b.x + ' ' + b.y + '" fill="none" stroke="rgba(15,168,119,.22)" stroke-width="1.5" stroke-linecap="round" data-from="' + e[0] + '" data-to="' + e[1] + '"/>'; }); svg.innerHTML = g; }
+  function relatives(id) { var unlocks = [], prereqs = []; GEDGES.forEach(function (e) { if (e[0] === id) unlocks.push(e[1]); if (e[1] === id) prereqs.push(e[0]); }); return { unlocks: unlocks, prereqs: prereqs }; }
+  function applyGraphSel() { var cv = document.getElementById('graph-canvas'); if (!cv) return; cv.querySelectorAll('.gnode').forEach(function (n) { n.classList.remove('sel', 'unlocks', 'prereq', 'dim'); }); document.querySelectorAll('#graph-svg path').forEach(function (p) { p.setAttribute('stroke', 'rgba(15,168,119,.22)'); p.setAttribute('stroke-width', '1.5'); }); if (!gselected) return; var rel = relatives(gselected); cv.querySelectorAll('.gnode').forEach(function (n) { var id = n.getAttribute('data-id'); if (id === gselected) n.classList.add('sel'); else if (rel.unlocks.indexOf(id) >= 0) n.classList.add('unlocks'); else if (rel.prereqs.indexOf(id) >= 0) n.classList.add('prereq'); else n.classList.add('dim'); }); document.querySelectorAll('#graph-svg path').forEach(function (p) { if (p.getAttribute('data-from') === gselected || p.getAttribute('data-to') === gselected) { p.setAttribute('stroke', 'rgba(15,168,119,.9)'); p.setAttribute('stroke-width', '2.6'); } }); }
+  function nameOf(id) { for (var i = 0; i < GNODES.length; i++) if (GNODES[i].id === id) return GNODES[i].n; return id; }
+  function nodeOf(id) { for (var i = 0; i < GNODES.length; i++) if (GNODES[i].id === id) return GNODES[i]; return null; }
+  function selectGraph(id) { gselected = id; applyGraphSel(); var nd = nodeOf(id); var rel = relatives(id); document.getElementById('gside-title').textContent = nd.n + (nd.opt ? ' (optativa)' : ''); document.getElementById('gside-info').textContent = nd.p + 'º período. Veja abaixo o que ela exige antes (raízes) e o que habilita depois (ramos).'; var html = ''; html += '<div class="glab p">Raízes — precisa antes</div>'; html += rel.prereqs.length ? rel.prereqs.map(function (x) { return '<span class="gchip">' + nameOf(x) + '</span>'; }).join('') : '<span class="ginfo" style="font-size:12px">Nenhum no recorte.</span>'; html += '<div class="glab u">Ramos — destrava depois</div>'; html += rel.unlocks.length ? rel.unlocks.map(function (x) { return '<span class="gchip">' + nameOf(x) + '</span>'; }).join('') : '<span class="ginfo" style="font-size:12px">Não destrava outras (neste recorte).</span>'; document.getElementById('gside-list').innerHTML = html; }
+
+  /* ===== ESTADO PERSISTIDO ===== */
+  var faltas = store.get('bp_faltas', {}), rooms = store.get('bp_rooms', {});
+  var addedOpt = store.get('bp_opt', {}); if (Array.isArray(addedOpt)) { addedOpt = { '1': addedOpt }; store.set('bp_opt', addedOpt); }
+  var notes = store.get('bp_notes', {});
+  var evals = store.get('bp_evals', {});
+  var curPeriod = store.get('bp_curperiod', 1);
+  var comp = store.get('bp_comp', { meta: 120, items: [] });
+  var agenda = store.get('bp_agenda', []);
+  var plan = store.get('bp_plan', {});
+  var expandedSubjects = store.get('bp_expanded', {});
+
+  /* ===== HELPERS DE CURRÍCULO ===== */
+  function maxFaltas(ch) { return Math.floor(ch * 0.25); }
+  function chFromName(n) { var m = n.match(/(\d+)\s*h\/a/); return m ? parseInt(m[1], 10) : 30; }
+  function editableSem(sem) { return parseInt(sem, 10) <= curPeriod; }
+  function listFor(sem) { var arr; if (sem === '1') arr = SEM1.map(function (o) { return { cod: o.cod, nome: o.nome, ch: o.ch, dept: o.dept }; }); else arr = (SEMS[sem] || []).map(function (a) { return { cod: a[2] || '', nome: a[0], ch: a[1], dept: a[3] || '' }; }); (addedOpt[sem] || []).forEach(function (name) { var optId = name.toLowerCase().substring(0,4); var oData = OPT_CATALOGUE[optId] || {}; arr.push({ cod: 'OPT', nome: name, ch: chFromName(name), opt: true, dept: oData.dept ? oData.dept.toLowerCase() : 'deteq' }); }); return arr; }
+  function keyOf(sem, it) { return sem + '|' + (it.cod && it.cod !== 'OPT' ? it.cod : it.nome); }
+  function semTotalCH(sem) { return listFor(String(sem)).reduce(function (a, it) { return a + (it.ch || 0); }, 0); }
+  function evalsFor(k) { return evals[k] || []; }
+  function notaFinal(k) { var arr = evalsFor(k).map(function (e) { return parseFloat(e.nota); }).filter(function (v) { return !isNaN(v); }); if (!arr.length) return NaN; var soma = arr.reduce(function (a, b) { return a + b; }, 0); return Math.min(100, soma); }
+
+  /* ===== SEM TABS (No-op para compatibilidade) ===== */
+  var curSem = '1';
+  function buildSemTabs(){ var el = document.getElementById('semtabs'); if (!el) return; }
+
+  /* ===== SELETOR DE PERÍODO (DROPDOWN PRINCIPAL DO PAINEL) ===== */
+  var periodPicker = document.getElementById('period-picker');
+  var periodBtn = document.getElementById('period-btn');
+  var periodMenu = document.getElementById('period-menu');
+  var periodLabel = document.getElementById('period-btn-label');
+
+  function buildPeriodMenu() {
+    if (!periodMenu) return;
+    var h = '';
+    for (var s = 1; s <= 9; s++) { h += '<button class="period-opt' + (s === curPeriod ? ' sel' : '') + '" data-p="' + s + '" role="option">' + s + 'º período</button>'; }
+    periodMenu.innerHTML = h;
+    if (periodLabel) periodLabel.textContent = curPeriod + 'º período';
+  }
+
+  function setPeriod(p) {
+    curPeriod = p; 
+    store.set('bp_curperiod', curPeriod);
+    curSem = String(curPeriod);
+    buildPeriodMenu(); 
+    renderNotas(); 
+    renderVisao(); 
+    renderHorarios();
+    flashSave();
+  }
+
+  if (periodBtn && periodMenu && periodPicker) {
+    buildPeriodMenu();
+    periodBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = periodPicker.classList.toggle('open');
+      periodBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    periodMenu.addEventListener('click', function (e) {
+      var opt = e.target.closest('.period-opt'); if (!opt) return;
+      setPeriod(parseInt(opt.getAttribute('data-p'), 10));
+      periodPicker.classList.remove('open');
+      periodBtn.setAttribute('aria-expanded', 'false');
+    });
+    document.addEventListener('click', function (e) {
+      if (!periodPicker.contains(e.target)) { periodPicker.classList.remove('open'); periodBtn.setAttribute('aria-expanded', 'false'); }
+    });
+  }
+
+  /* ===== CRA COLAPSÁVEL (Visão Geral) ===== */
+  (function () {
+    var col = document.getElementById('cra-collapse');
+    var tog = document.getElementById('cra-toggle');
+    if (col && tog) {
+      tog.addEventListener('click', function () {
+        var open = col.classList.toggle('open');
+        tog.setAttribute('aria-expanded', open ? 'true' : 'false');
+        tog.querySelector('span').textContent = open ? 'Ocultar evolução do CRA' : 'Ver evolução do CRA';
+      });
+    }
+  })();
+
+  /* ===== SUBNAV ===== */
+  var renderers = { visao: renderVisao, notas: renderNotas, horarios: renderHorarios, prereqs: function () { setTimeout(layoutGraph, 30); renderPlanner(); }, complementares: renderComp, calendario: renderCalendario };
+  var subnavElem = document.getElementById('subnav');
+  if (subnavElem) {
+    subnavElem.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var bl = b.getAttribute('data-block'); document.querySelectorAll('#subnav button').forEach(function (x) { x.classList.toggle('on', x === b); }); document.querySelectorAll('.panel-block').forEach(function (p) { p.classList.toggle('on', p.id === 'block-' + bl); }); if (renderers[bl]) renderers[bl](); });
+  }
+
+  function currentList() { var ed = editableSem(curSem); return listFor(curSem).map(function (it) { it.locked = !ed; return it; }); }
+  function statusOf(n, f, mx) { if (f > mx) return ['Reprovado por falta', 'bad']; if (isNaN(n)) return ['Sem nota', 'neutral']; if (n >= 60) return ['Aprovado', 'ok']; if (n >= 40) return ['Em risco', 'warn']; return ['Insuficiente', 'bad']; }
+
+  /* ===== NOTAS + FALTAS ===== */
+  function renderNotas() {
+    var list = currentList(), html = '', aprov = 0, somaN = 0, cntN = 0;
+    list.forEach(function (it) {
+      var k = keyOf(curSem, it), f = faltas[k] || 0, mx = maxFaltas(it.ch), n = notaFinal(k);
+      var st = statusOf(n, f, mx), pct = isNaN(n) ? 0 : Math.min(100, Math.round(n / 100 * 100));
+      var pctFaltas = mx > 0 ? Math.min(100, Math.round(f / mx * 100)) : 0;
+      if (!isNaN(n)) { somaN += n; cntN++; if (n >= 60 && f <= mx) aprov++; }
+      var isExpanded = expandedSubjects[k] === true;
+      var evs = evalsFor(k);
+      var evRows = evs.length ? evs.map(function (e, i) { return '<div class="eval-row"><span class="ev-n">' + esc(e.nome || 'Avaliação') + '</span><span class="ev-d">' + esc(e.data || '—') + '</span><span class="ev-v">' + esc(e.nota) + ' pts</span><span class="ev-x" data-evx="' + k + '|' + i + '">✕</span></div>'; }).join('') : '<div class="eval-empty">Nenhuma avaliação lançada ainda.</div>';
+      html += '<div class="subj' + (it.locked ? ' locked' : '') + (isExpanded ? ' open' : '') + '" id="card-' + k.replace(/\|/g, '_') + '">'
+        + '<div class="subj-header" data-toggle-k="' + k + '">'
+        + '<div class="subj-header-top">'
+        + '<div class="top"><div><span class="nm">' + it.nome + '</span>' + (it.cod && it.cod !== 'OPT' ? '<span class="cd">' + it.cod + '</span>' : '') + (it.dept ? '<span class="tag-dept ' + it.dept + '">' + it.dept.toUpperCase() + '</span>' : '') + (it.opt ? '<span class="rm-opt" data-rm="' + encodeURIComponent(it.nome) + '">remover</span>' : '') + '<div class="ch">' + it.ch + ' h/a · aprovação ≥ 60</div></div><span class="badge ' + st[1] + '">' + st[0] + '</span></div>'
+        + '<div class="subj-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>'
+        + '</div>'
+        + '<div class="subj-compact-bars">'
+        + '<div class="subj-bar-container"><div class="subj-bar-meta"><span>Notas acumuladas</span><span class="val">' + (isNaN(n) ? '0' : n.toFixed(1)) + 'pts</span></div><div class="subj-bar-track"><div class="subj-bar-fill" style="width:' + pct + '%; background:var(--grad-nota)"></div></div></div>'
+        + '<div class="subj-bar-container"><div class="subj-bar-meta"><span>Faltas</span><span class="val">' + f + ' fls</span></div><div class="subj-bar-track"><div class="subj-bar-fill" style="width:' + pctFaltas + '%; background:var(--grad-falta)"></div></div></div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="subj-body">'
+        + '<div class="subj-sub">Avaliações</div>'
+        + '<div class="eval-list">' + evRows + '</div>'
+        + (it.locked ? '' : '<div class="eval-add" data-k="' + k + '"><input type="text" class="add-nome" placeholder="Nome (ex: Prova 1)"><input type="date" class="add-data"><input type="number" class="add-nota" min="0" max="100" placeholder="nota"><button class="ev-btn-add">Adicionar</button></div>')
+        + '<div class="subj-sub">Controle de Faltas</div>'
+        + '<div class="faltas-row"><div class="stepper"><button data-f="' + k + '" data-d="-1" ' + (it.locked ? 'disabled' : '') + '>−</button><span class="cnt">' + f + '</span><button data-f="' + k + '" data-d="1" ' + (it.locked ? 'disabled' : '') + '>+</button></div><div class="bar2"><div class="fill" style="width:' + pctFaltas + '%;background:' + (f > mx ? 'var(--danger)' : (f >= mx - 1 ? 'var(--warn)' : 'var(--emerald)')) + '"></div></div><span class="faltas-info"><b>' + f + '</b> de ' + mx + ' · restam <b>' + Math.max(0, mx - f) + '</b></span></div>'
+        + (it.locked ? '' : '<textarea class="note-in" data-nk="' + k + '" placeholder="Anotações, links, tarefas…">' + esc(notes[k] || '') + '</textarea>')
+        + '</div>'
+        + '</div>';
+    });
+    var gradeListElem = document.getElementById('grade-list');
+    if (gradeListElem) gradeListElem.innerHTML = html;
+    var media = cntN ? (somaN / cntN).toFixed(1) : '—';
+    var summaryElem = document.getElementById('grade-summary');
+    if (summaryElem) {
+      summaryElem.innerHTML = ''
+        + '<div class="sm"><div class="v">' + list.length + '</div><div class="l">Disciplinas</div></div>'
+        + '<div class="sm"><div class="v">' + aprov + '</div><div class="l">Aprovadas</div></div>'
+        + '<div class="sm"><div class="v">' + (media !== '—' ? media : '—') + '</div><div class="l">Média Período</div></div>'
+        + '<div class="sm"><div class="v">' + (editableSem(curSem) ? 'Sim' : 'Não') + '</div><div class="l">Editável</div></div>';
+    }
+    var addoptZone = document.getElementById('addopt-zone');
+    if (addoptZone) addoptZone.style.display = editableSem(curSem) ? 'flex' : 'none';
+    renderIntegr();
+    drawCra();
+  }
+
+  var gradeListContainer = document.getElementById('grade-list');
+  if (gradeListContainer) {
+    gradeListContainer.addEventListener('click', function (e) {
+      var target = e.target;
+      var header = target.closest('.subj-header');
+      if (header) {
+        if (target.closest('.rm-opt')) return;
+        var kToggle = header.getAttribute('data-toggle-k');
+        var card = document.getElementById('card-' + kToggle.replace(/\|/g, '_'));
+        if (card) { var isOpen = card.classList.toggle('open'); expandedSubjects[kToggle] = isOpen; store.set('bp_expanded', expandedSubjects); }
+        return;
+      }
+      if (target.classList.contains('ev-btn-add')) {
+        var form = target.closest('.eval-add');
+        var k3 = form.getAttribute('data-k');
+        var nome = form.querySelector('.add-nome').value || 'Avaliação';
+        var data = form.querySelector('.add-data').value || '';
+        var notaVal = form.querySelector('.add-nota').value;
+        if (notaVal === '' || isNaN(parseFloat(notaVal))) return;
+        evals[k3] = evals[k3] || [];
+        evals[k3].push({ nome: nome, data: data, nota: Math.max(0, Math.min(100, parseFloat(notaVal))) });
+        store.set('bp_evals', evals); renderNotas(); flashSave(); return;
+      }
+      var rm = target.closest('.rm-opt');
+      if (rm) {
+        var name = decodeURIComponent(rm.getAttribute('data-rm'));
+        addedOpt[curSem] = (addedOpt[curSem] || []).filter(function (n) { return n !== name; });
+        store.set('bp_opt', addedOpt);
+        var k = curSem + '|' + name;
+        delete faltas[k]; delete notes[k]; delete evals[k];
+        store.set('bp_faltas', faltas); store.set('bp_notes', notes); store.set('bp_evals', evals);
+        renderNotas(); flashSave(); return;
+      }
+      var f = target.closest('button[data-f]');
+      if (f) { var k2 = f.getAttribute('data-f'), d = parseInt(f.getAttribute('data-d'), 10); faltas[k2] = Math.max(0, (faltas[k2] || 0) + d); store.set('bp_faltas', faltas); renderNotas(); flashSave(); return; }
+      var xr = target.closest('.ev-x');
+      if (xr) { var dataVal = xr.getAttribute('data-evx'); var parts = dataVal.split('|'); var key = parts[0] + '|' + parts[1]; var index = parseInt(parts[2], 10); if (evals[key]) { evals[key].splice(index, 1); store.set('bp_evals', evals); renderNotas(); flashSave(); } return; }
+    });
+
+    gradeListContainer.addEventListener('input', function (e) { var ta = e.target.closest('textarea.note-in'); if (ta) { notes[ta.getAttribute('data-nk')] = ta.value; store.set('bp_notes', notes); flashSave(); } });
+  }
+
+  var sel = document.getElementById('opt-select');
+  if (sel) {
+    sel.innerHTML = OPTATIVAS.map(function (o) { return '<option>' + o + '</option>'; }).join('');
+    var optAddBtn = document.getElementById('opt-add');
+    if (optAddBtn) {
+      optAddBtn.addEventListener('click', function () { var name = sel.value; addedOpt[curSem] = addedOpt[curSem] || []; if (addedOpt[curSem].indexOf(name) === -1) { addedOpt[curSem].push(name); store.set('bp_opt', addedOpt); renderNotas(); flashSave(); } });
+    }
+  }
+
+  /* ===== CRA / INTEGRALIZAÇÃO ===== */
+  function realCRA() { var accCH = 0, accWG = 0; for (var s = 1; s <= curPeriod; s++) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); if (!isNaN(v)) { accCH += it.ch; accWG += v * it.ch; } }); } return accCH ? accWG / accCH : null; }
+  function doneHours() { var done = 0; for (var s = 1; s <= curPeriod; s++) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); var f = faltas[k] || 0; if (!isNaN(v) && v >= 60 && f <= maxFaltas(it.ch)) done += it.ch; }); } return done; }
+  function globalAvgNota() { var sum = 0, c = 0; for (var s = 1; s <= 9; s++) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); if (!isNaN(v)) { sum += v; c++; } }); } return c ? sum / c : 70; }
+  function craSeries() { var pts = [], accCH = 0, accWG = 0, gAvg = globalAvgNota(); for (var s = 1; s <= 9; s++) { if (s <= curPeriod) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); if (!isNaN(v)) { accCH += it.ch; accWG += v * it.ch; } }); } else { var ch = semTotalCH(s); accCH += ch; accWG += ch * gAvg; } pts.push(accCH ? +(accWG / accCH).toFixed(1) : 70.0); } return pts; }
+
+  function drawCra() {
+    var pts = craSeries();
+    var svg = document.getElementById('cra-chart'); if (!svg) return;
+    var W = 520, H = 160, padR = 14, padT = 10, padB = 22, y0 = padT, y1 = H - padB, x0 = 38, x1 = W - padR, ymin = 40, ymax = 100;
+    var X = function (i) { return x0 + (x1 - x0) * (i / 8); };
+    var Y = function (v) { return y1 - (y1 - y0) * ((Math.max(ymin, Math.min(ymax, v)) - ymin) / (ymax - ymin)); };
+    var g = '';
+    [40, 70, 100].forEach(function (v) { var y = Y(v); g += '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="rgba(255,255,255,.1)"></line>'; g += '<text x="' + (x0 - 6) + '" y="' + (y + 3) + '" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="8" fill="rgba(232,242,238,.65)">' + v + '</text>'; });
+    var yt = Y(75);
+    g += '<line x1="' + x0 + '" y1="' + yt + '" x2="' + x1 + '" y2="' + yt + '" stroke="#0FA877" stroke-dasharray="4 4" stroke-width="1"></line>';
+    g += '<text x="' + x1 + '" y="' + (yt - 4) + '" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="7.5" fill="#7FE0BC">meta ~75</text>';
+    var poly = pts.map(function (v, i) { return X(i) + ',' + Y(v); }).join(' ');
+    g += '<polyline points="' + poly + '" fill="none" stroke="#C2EE73" stroke-width="2"></polyline>';
+    pts.forEach(function (v, i) { var real = (i + 1) <= curPeriod; g += '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="' + (real ? 4 : 3.2) + '" fill="' + (real ? '#C2EE73' : '#06201C') + '" stroke="#C2EE73" stroke-width="1.4"></circle>'; g += '<text x="' + X(i) + '" y="' + (y1 + 13) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.5" fill="rgba(232,242,238,.65)">' + (i + 1) + 'º</text>'; });
+    svg.innerHTML = g;
+    var simCraBig = document.getElementById('sim-cra-big');
+    if (simCraBig) {
+      var fin = pts[8] || 70.0;
+      simCraBig.innerHTML = '<div class="scv">' + fin.toFixed(1) + '</div><div class="scl">CRA projetado automaticamente ao final do 9º período</div><div class="scs">' + (fin >= 75 ? '✓ acima da meta ~75 do PPGEE-UFMG' : 'faltam ' + (75 - fin).toFixed(1) + ' pts para a meta ~75') + '</div>';
+    }
+  }
+
+  function renderIntegr() {
+    var done = doneHours(); var pct = Math.min(100, done / TOTAL_HA * 100); var cra = realCRA();
+    var integrElem = document.getElementById('integr');
+    if (integrElem) {
+      integrElem.innerHTML = '<div class="itop"><h4>Progresso de integralização</h4><span class="icount">' + done + ' / ' + TOTAL_HA + ' h/a</span></div><div class="isub">Soma de h/aula aprovadas em todos os períodos desbloqueados, rumo ao total do curso.</div><div class="ibar"><div class="ifill" style="width:' + pct + '%"></div></div><div class="imeta"><span>Concluído <b>' + pct.toFixed(1) + '%</b></span><span>Restante <b>' + (TOTAL_HA - done) + ' h/a</b></span><span>CRA real <b>' + (cra !== null ? cra.toFixed(1) : '—') + '</b></span><span>Período atual <b>' + curPeriod + 'º</b></span></div>';
+    }
+  }
+
+  /* ========================================================
+     DADOS ATUALIZADOS DE HORÁRIOS, SALAS (421/422) E FILTRO T1/T2
+     ======================================================== */
+  var selectedTurmaFilter = 'ALL';
+
+  var SCHED_DATA = {
+    '1': {
+      head: ['Horário', 'SEG · NS', 'TER · NS', 'QUA · NS', 'QUI · NG', 'SEX · NS'],
+      rows: [
+        {
+          t: '19:00–20:40',
+          cells: [
+            { c: 'G00QUIM1.01', n: 'Química Teórica', p: 'Claudinei Calado', rk: 'seg1_p1', rd: '421', cp: 'ns' },
+            { c: 'G00PAOR0.01', n: 'Psicologia Apl. às Organizações', p: 'Thiago Nunes', rk: 'ter1_p1', rd: '421', cp: 'ns' },
+            { 
+              c: 'G00BCEL0.01 / G00BFLA0.01', 
+              n: 'Bio. Celular Prát. (T1) / Biosseg. Prát. (T2)', 
+              p: 'L. M. Costa Moreira / M. M. Drumond', 
+              rk: 'qua1_p1', rd: 'Lab 208 / 209', cp: 'ns',
+              isPractice: true,
+              t1Info: { n: 'Bio. Celular Prát. (T1)', p: 'L. M. Costa Moreira', rd: 'Lab 208' },
+              t2Info: { n: 'Biosseg. Prát. (T2)', p: 'M. M. Drumond', rd: 'Lab 209' }
+            },
+            { 
+              c: 'G00LQUI1.01 / G00BIOE1.01', 
+              n: 'Lab. Química (T1) / Bioestatística I (T2)', 
+              p: 'Eudes Lourenço / M. M. Drumond', 
+              rk: 'qui1_p1', rd: 'Lab 205 / 121A', cp: 'ng',
+              isPractice: true,
+              t1Info: { n: 'Lab. Química (T1)', p: 'Eudes Lourenço', rd: 'Lab 205' },
+              t2Info: { n: 'Bioestatística I (T2)', p: 'M. M. Drumond', rd: '121A' }
+            },
+            { c: 'G00QUIM1.01', n: 'Química Teórica', p: 'Claudinei Calado', rk: 'sex1_p1', rd: '421', cp: 'ns' }
+          ]
+        },
+        {
+          t: '20:50–22:30',
+          cells: [
+            { c: 'G00BCEL0.01', n: 'Biologia Celular Teórica', p: 'Thiago Cotta Ribeiro', rk: 'seg2_p1', rd: '421', cp: 'ns' },
+            { c: 'G00CSPB0.01', n: 'Contexto Social e Prof. da Biotec.', p: 'Leila S. Ortega / Raquel C. S. Chagas', rk: 'ter2_p1', rd: '421', cp: 'ns' },
+            { 
+              c: 'G00BCEL0.01 / G00BFLA0.01', 
+              n: 'Bio. Celular Prát. (T2) / Biosseg. Prát. (T1)', 
+              p: 'L. M. Costa Moreira / M. M. Drumond', 
+              rk: 'qua2_p1', rd: 'Lab 208 / 209', cp: 'ns',
+              isPractice: true,
+              t1Info: { n: 'Biosseg. Prát. (T1)', p: 'M. M. Drumond', rd: 'Lab 209' },
+              t2Info: { n: 'Bio. Celular Prát. (T2)', p: 'L. M. Costa Moreira', rd: 'Lab 208' }
+            },
+            { 
+              c: 'G00LQUI1.01 / G00BIOE1.01', 
+              n: 'Lab. Química (T2) / Bioestatística I (T1)', 
+              p: 'Eudes Lourenço / M. M. Drumond', 
+              rk: 'qui2_p1', rd: 'Lab 205 / 121A', cp: 'ng',
+              isPractice: true,
+              t1Info: { n: 'Bioestatística I (T1)', p: 'M. M. Drumond', rd: '121A' },
+              t2Info: { n: 'Lab. Química (T2)', p: 'Eudes Lourenço', rd: 'Lab 205' }
+            },
+            { c: 'G00FITE0.01', n: 'Filosofia da Tecnologia', p: 'Huener Silva Gonçalves', rk: 'sex2_p1', rd: '421', cp: 'ns' }
+          ]
+        }
+      ]
+    },
+    '2': {
+      head: ['Horário', 'SEG · NS', 'TER · NS', 'QUA · NS', 'QUI · NS', 'SEX · NS'],
+      rows: [
+        {
+          t: '19:00–20:40',
+          cells: [
+            { c: 'G00EPCO0.01', n: 'Estrutura e Prop. Compostos Orgânicos', p: 'Coord. Química', rk: 'seg1_p2', rd: '422', cp: 'ns' },
+            { c: 'G00MBG00.01', n: 'Microbiologia Geral Teórica', p: 'Prof. Microbiologia', rk: 'ter1_p2', rd: '422', cp: 'ns' },
+            { 
+              c: 'G00MBG00.01 / G00HGHL0.01', 
+              n: 'Microbiologia Prát. (T1) / Histologia Prát. (T2)', 
+              p: 'Equipe DCB', rk: 'qua1_p2', rd: 'Lab 206 / Lab 202', cp: 'ns',
+              isPractice: true,
+              t1Info: { n: 'Microbiologia Prát. (T1)', p: 'Equipe DCB', rd: 'Lab 206' },
+              t2Info: { n: 'Histologia Prát. (T2)', p: 'Equipe DCB', rd: 'Lab 202' }
+            },
+            { c: 'G00BIOE2.01', n: 'Bioestatística II', p: 'Prof. Matemática', rk: 'qui1_p2', rd: '422', cp: 'ns' },
+            { c: 'G00SRB00.01', n: 'Segurança e Regulamentação em Biotec.', p: 'Prof. Legislação', rk: 'sex1_p2', rd: '422', cp: 'ns' }
+          ]
+        },
+        {
+          t: '20:50–22:30',
+          cells: [
+            { c: 'G00HGHL0.01', n: 'Histologia Geral Humana Teórica', p: 'Prof. Histologia', rk: 'seg2_p2', rd: '422', cp: 'ns' },
+            { c: 'G00ISOC0.01', n: 'Introdução à Sociologia', p: 'Prof. DCSF', rk: 'ter2_p2', rd: '422', cp: 'ns' },
+            { 
+              c: 'G00MBG00.01 / G00HGHL0.01', 
+              n: 'Microbiologia Prát. (T2) / Histologia Prát. (T1)', 
+              p: 'Equipe DCB', rk: 'qua2_p2', rd: 'Lab 206 / Lab 202', cp: 'ns',
+              isPractice: true,
+              t1Info: { n: 'Histologia Prát. (T1)', p: 'Equipe DCB', rd: 'Lab 202' },
+              t2Info: { n: 'Microbiologia Prát. (T2)', p: 'Equipe DCB', rd: 'Lab 206' }
+            },
+            { c: 'G00MECI0.01', n: 'Metodologia Científica', p: 'Prof. Metodologia', rk: 'qui2_p2', rd: '422', cp: 'ns' },
+            { c: 'G00EPCO0.01', n: 'Estrutura e Prop. Compostos Orgânicos (Prática)', p: 'Coord. Química', rk: 'sex2_p2', rd: 'Lab Química', cp: 'ns' }
+          ]
+        }
+      ]
+    }
+  };
+
+  function schedTable(editable) {
+    var pKey = String(curPeriod > 2 ? 1 : curPeriod);
+    var sched = SCHED_DATA[pKey] || SCHED_DATA['1'];
+    
+    var th = '<tr>' + sched.head.map(function(h){ return '<th>' + h + '</th>'; }).join('') + '</tr>';
+    var body = sched.rows.map(function(r){
+      return '<tr><td class="time">' + r.t + '</td>' + r.cells.map(function(c){
+        var rd = rooms[c.rk] !== undefined ? rooms[c.rk] : c.rd;
+        
+        var isHighlighted = false;
+        var displayTitle = c.n;
+        var displayProf = c.p;
+        var displayRoom = rd;
+
+        if (c.isPractice && selectedTurmaFilter !== 'ALL') {
+          isHighlighted = true;
+          var tData = (selectedTurmaFilter === 'T1') ? c.t1Info : c.t2Info;
+          if (tData) {
+            displayTitle = tData.n;
+            displayProf = tData.p;
+            displayRoom = rooms[c.rk] !== undefined ? rooms[c.rk] : tData.rd;
+          }
+        }
+
+        var roomHtml = editable ? 
+          '<div class="cell-room"><label>sala</label><input data-rk="' + c.rk + '" value="' + esc(displayRoom) + '"></div>' : 
+          '<div class="cell-room"><span class="rd">sala ' + esc(displayRoom) + '</span></div>';
+        
+        var cellContent = '<span class="campus-tag campus-' + c.cp + '">' + (c.cp === 'ng' ? 'NG' : 'NS') + '</span> ' +
+                          '<span class="cell-c">' + c.c + '</span>' +
+                          '<div class="cell-n">' + esc(displayTitle) + '</div>' +
+                          '<div class="cell-p">' + esc(displayProf) + '</div>' + roomHtml;
+
+        return '<td class="' + (isHighlighted ? 'cell-practice-highlight' : '') + '">' + cellContent + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+
+    return '<table class="grid-sched">' + th + body + '</table>';
+  }
+
+  function renderHorarios() {
+    var host = document.getElementById('sched-horarios');
+    if (!host) return;
+
+    var schedSelect = document.getElementById('sched-period-select');
+    if (schedSelect) schedSelect.value = String(curPeriod > 2 ? 1 : curPeriod);
+
+    var turmaSelect = document.getElementById('sched-turma-select');
+    if (turmaSelect) turmaSelect.value = selectedTurmaFilter;
+
+    host.innerHTML = schedTable(true);
+    host.querySelectorAll('input[data-rk]').forEach(function(inp){
+      inp.addEventListener('input', function(){
+        rooms[inp.getAttribute('data-rk')] = inp.value;
+        store.set('bp_rooms', rooms);
+        flashSave();
+        renderVisao();
+      });
+    });
+    renderAgenda();
+  }
+
+  /* LISTENERS DOS DROPDOWNS DA ABA DE HORÁRIOS */
+  var schedPeriodSelect = document.getElementById('sched-period-select');
+  if (schedPeriodSelect) {
+    schedPeriodSelect.addEventListener('change', function(){
+      curPeriod = parseInt(this.value, 10);
+      store.set('bp_curperiod', curPeriod);
+      buildPeriodMenu();
+      renderNotas();
+      renderVisao();
+      renderHorarios();
+      flashSave();
+    });
+  }
+
+  var schedTurmaSelect = document.getElementById('sched-turma-select');
+  if (schedTurmaSelect) {
+    schedTurmaSelect.addEventListener('change', function(){
+      selectedTurmaFilter = this.value;
+      renderHorarios();
+      renderVisao();
+    });
+  }
+
+  /* VISÃO GERAL TOTALMENTE INTEGRADA E DINÂMICA COM O PERÍODO E TURMA SELECIONADOS */
+  function renderVisao(){
+    var wrap = document.getElementById('visao-wrap'); 
+    if(!wrap) return;
+
+    var done = doneHours();
+    var pctInt = Math.min(100, done / TOTAL_HA * 100);
+    var cra = realCRA();
+    var compTotal = comp.items.reduce(function(a,b){ return a + (parseFloat(b.horas) || 0); }, 0);
+    var compPct = comp.meta > 0 ? Math.min(100, compTotal / comp.meta * 100) : 0;
+
+    // Levantamento de disciplinas em risco de falta
+    var risco = [];
+    for(var s = 1; s <= curPeriod; s++){
+      listFor(String(s)).forEach(function(it){
+        var k = keyOf(String(s), it), f = faltas[k] || 0, mx = maxFaltas(it.ch);
+        if(mx > 0 && f >= Math.ceil(mx * 0.6)){
+          var stat = f > mx ? ['Reprovado', 'bad'] : (f >= mx - 1 ? ['No limite', 'warn'] : ['Atenção', 'warn']);
+          risco.push({ nome: it.nome, sem: s, f: f, mx: mx, stat: stat, ratio: f / mx });
+        }
+      });
+    }
+    risco.sort(function(a,b){ return b.ratio - a.ratio; });
+    risco = risco.slice(0, 5);
+
+    var today = new Date(); 
+    today.setHours(0,0,0,0);
+    var combinedEvents = [];
+
+    if (typeof CALENDAR_DB !== 'undefined') {
+      CALENDAR_DB.forEach(function(ev){
+        var d = new Date(ev.date + 'T00:00:00');
+        if(d >= today) { combinedEvents.push({ title: ev.title, date: ev.date, type: ev.type, oficial: true }); }
+      });
+    }
+
+    if (typeof agenda !== 'undefined') {
+      agenda.forEach(function(ev){
+        if(ev.date) {
+          var d = new Date(ev.date + 'T00:00:00');
+          if(d >= today) { combinedEvents.push({ title: ev.title, date: ev.date, type: ev.type, oficial: false }); }
+        }
+      });
+    }
+
+    combinedEvents.sort(function(x,y){ return x.date.localeCompare(y.date); });
+    var prox = combinedEvents.slice(0, 5);
+
+    // Garante o número do período ativo (reflete 1º ou 2º período ou redireciona adequadamente)
+    var activePeriodNumber = (curPeriod > 2 ? 1 : curPeriod);
+
+    /* CONTROLES INTEGRADOS DE PERÍODO E TURMA DIRETO NA VISÃO GERAL */
+    var schedControls = '<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">' +
+      '<div><label style="font-size:11px; font-weight:800; color:var(--ink-soft); margin-right:6px;">PERÍODO:</label>' +
+      '<select id="vg-sched-period-select" class="sched-select-dropdown">' +
+        '<option value="1"' + (activePeriodNumber === 1 ? ' selected' : '') + '>1º período</option>' +
+        '<option value="2"' + (activePeriodNumber === 2 ? ' selected' : '') + '>2º período</option>' +
+      '</select></div>' +
+      '<div><label style="font-size:11px; font-weight:800; color:var(--ink-soft); margin-right:6px;">TURMA:</label>' +
+      '<select id="vg-sched-turma-select" class="sched-select-dropdown">' +
+        '<option value="ALL"' + (selectedTurmaFilter === 'ALL' ? ' selected' : '') + '>Todas</option>' +
+        '<option value="T1"' + (selectedTurmaFilter === 'T1' ? ' selected' : '') + '>T1</option>' +
+        '<option value="T2"' + (selectedTurmaFilter === 'T2' ? ' selected' : '') + '>T2</option>' +
+      '</select></div>' +
+      '</div>';
+
+    /* BLOCO DA GRADE DA SEMANA: REFLETE O PERÍODO ATIVO E RENOMEADO PARA "editar períodos e salas →" */
+    var schedBlock = '<div class="ov-card" style="margin-bottom:var(--s3)"><div class="oh" style="flex-wrap:wrap; gap:10px;">' +
+      '<div><h4>Grade da semana · ' + activePeriodNumber + 'º período</h4>' +
+      '<span class="olink" data-go="horarios" style="display:inline-block; margin-top:4px;">editar períodos e salas →</span></div>' +
+      schedControls + 
+      '</div><div style="overflow-x:auto">' + schedTable(false) + '</div></div>';
+
+    var kpis = ''
+      + '<div class="ov-kpi"><div class="kv">' + (cra !== null ? cra.toFixed(1) : '—') + '</div><div class="kl">CRA real</div><div class="ks">' + (cra !== null ? (cra >= 75 ? 'acima da meta 75' : 'meta ~75') : 'sem notas ainda') + '</div></div>'
+      + '<div class="ov-kpi"><div class="kv">' + pctInt.toFixed(0) + '%</div><div class="kl">Integralização</div><div class="ks">' + done + ' / ' + TOTAL_HA + ' h/a</div></div>'
+      + '<div class="ov-kpi"><div class="kv">' + curPeriod + 'º</div><div class="kl">Período atual</div><div class="ks">' + (9 - curPeriod) + ' restante(s) de 9</div></div>'
+      + '<div class="ov-kpi"><div class="kv">' + compTotal + '</div><div class="kl">Horas complementares</div><div class="ks">' + compPct.toFixed(0) + '% da meta de ' + comp.meta + ' h</div></div>';
+
+    var bars = '<div class="ov-card"><div class="oh"><h4>Progresso geral</h4></div>'
+      + '<div class="miniprog"><div class="mt"><span>Integralização do curso</span><b>' + pctInt.toFixed(1) + '%</b></div><div class="mbar"><div class="mf" style="width:' + pctInt + '%"></div></div></div>'
+      + '<div class="miniprog" style="margin-top:18px"><div class="mt"><span>Horas complementares</span><b>' + compTotal + '/' + comp.meta + ' h</b></div><div class="mbar"><div class="mf" style="width:' + compPct + '%"></div></div></div>'
+      + '</div>';
+
+    var eventos = '<div class="ov-card"><div class="oh"><h4>Próximos eventos (Unificados)</h4><span class="olink" data-go="calendario">ver calendário completo →</span></div>'
+      + (prox.length ? prox.map(function(a){
+        var d = new Date(a.date + 'T00:00:00');
+        var dias = Math.round((d - today) / 86400000);
+        var quando = dias === 0 ? 'hoje' : (dias === 1 ? 'amanhã' : 'em ' + dias + ' dias');
+        return '<div class="ov-li"><div><div class="oname">' + (a.oficial ? '<span style="color:var(--accent); font-weight:800; font-size:11px">[Oficial ✓]</span> ' : '') + esc(a.title) + '</div><div class="osub">' + esc(a.type) + ' · ' + esc(a.date) + '</div></div><span class="badge ' + (dias <= 3 ? 'warn' : 'neutral') + '">' + quando + '</span></div>';
+      }).join('') : '<div class="ov-empty">Nenhum evento futuro encontrado.</div>')
+      + '</div>';
+
+    var faltasRisco = '<div class="ov-card" style="margin-top:var(--s3)"><div class="oh"><h4>Faltas em risco</h4><span class="olink" data-go="notas">ver notas &amp; faltas →</span></div>'
+      + (risco.length ? risco.map(function(r){ return '<div class="ov-li"><div><div class="oname">' + esc(r.nome) + '</div><div class="osub">' + r.sem + 'º período · ' + r.f + ' de ' + r.mx + ' faltas</div></div><span class="badge ' + r.stat[1] + '">' + r.stat[0] + '</span></div>'; }).join('') : '<div class="ov-empty">Tudo tranquilo — nenhuma disciplina em risco.</div>')
+      + '</div>';
+
+    /* MONTAGEM FINAL DA VISÃO GERAL: GRADE SEMANAL DINÂMICA -> KPIS -> PROGRESSO/EVENTOS -> FALTAS */
+    wrap.innerHTML = schedBlock + '<div class="ov-kpis">' + kpis + '</div><div class="ov-cols">' + bars + eventos + '</div>' + faltasRisco;
+
+    /* LISTENERS DOS DROPDOWNS DE PERÍODO E TURMA DA VISÃO GERAL */
+    var vgPeriodSelect = document.getElementById('vg-sched-period-select');
+    if (vgPeriodSelect) {
+      vgPeriodSelect.addEventListener('change', function(){
+        curPeriod = parseInt(this.value, 10);
+        store.set('bp_curperiod', curPeriod);
+        buildPeriodMenu();
+        renderNotas();
+        renderVisao();
+        renderHorarios();
+        flashSave();
+      });
+    }
+
+    var vgTurmaSelect = document.getElementById('vg-sched-turma-select');
+    if (vgTurmaSelect) {
+      vgTurmaSelect.addEventListener('change', function(){
+        selectedTurmaFilter = this.value;
+        renderVisao();
+        renderHorarios();
+      });
+    }
+  }
+
+  /* ===== AGENDA ===== */
+  function renderAgenda() { var wrap = document.getElementById('agenda-wrap'); var today = new Date(); today.setHours(0, 0, 0, 0); var sorted = agenda.map(function (a, i) { return { a: a, i: i }; }).sort(function (x, y) { return (x.a.date || '').localeCompare(y.a.date || ''); }); var items = sorted.length ? sorted.map(function (o) { var a = o.a; var d = a.date ? new Date(a.date + 'T00:00:00') : null; var dias = d ? Math.round((d - today) / 86400000) : null; var sub = d ? (dias > 0 ? 'em ' + dias + ' dia(s)' : (dias === 0 ? 'hoje' : Math.abs(dias) + ' dia(s) atrás')) : ''; var dim = (dias !== null && dias < 0) ? 'opacity:.55;' : ''; return '<div class="titem" style="' + dim + '"><div><div class="ti-main">' + esc(a.title) + '</div><div class="ti-sub"><span class="ti-tag">' + esc(a.type) + '</span> · ' + esc(a.date || '') + (sub ? ' · ' + sub : '') + '</div></div><span class="ti-rm" data-rm="' + o.i + '">remover</span></div>'; }).join('') : '<div class="empty">Sem eventos de agenda.</div>'; wrap.innerHTML = '<div class="addrow"><input id="ag-date" type="date"><input class="grow" id="ag-title" placeholder="Título (ex: Exame Especial - Cálculo I)"><select id="ag-type"><option>Prova</option><option>Entrega</option><option>Evento</option><option>Reunião</option><option>Outro</option></select><input class="grow" id="ag-desc" placeholder="Breve descrição opcional"><button class="add" id="ag-add">Adicionar</button></div>' + items; }
+  (function () { var w = document.getElementById('agenda-wrap'); if (w) { w.addEventListener('click', function (e) { var a = e.target.closest('#ag-add'); if (a) { var date = document.getElementById('ag-date').value; var title = document.getElementById('ag-title').value; var type = document.getElementById('ag-type').value; var desc = document.getElementById('ag-desc').value; if (!title) { alert('Por favor, informe o título do evento.'); return; } if (!date) { var td = new Date(); date = td.getFullYear() + '-' + String(td.getMonth() + 1).padStart(2, '0') + '-' + String(td.getDate()).padStart(2, '0'); } agenda.push({ date: date, title: title, type: type, desc: desc }); store.set('bp_agenda', agenda); renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); return; } var rm = e.target.closest('.ti-rm'); if (rm) { agenda.splice(+rm.getAttribute('data-rm'), 1); store.set('bp_agenda', agenda); renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); } }); } })();
+
+  var visaoWrap = document.getElementById('visao-wrap');
+  if (visaoWrap) {
+    visaoWrap.addEventListener('click', function (e) { var g = e.target.closest('[data-go]'); if (!g) return; var blk = g.getAttribute('data-go'); if (blk === 'calendario') { var btnCal = document.querySelector('nav button[data-page="calendario"]'); if (btnCal) btnCal.click(); } else { var btnPainel = document.querySelector('nav button[data-page="painel"]'); if (btnPainel) btnPainel.click(); setTimeout(function () { var tab = document.querySelector('#subnav button[data-block="' + blk + '"]'); if (tab) tab.click(); }, 100); } });
+  }
+
+  /* ===== COMPLEMENTARES ===== */
+  function renderComp() { var wrap = document.getElementById('comp-wrap'); if (!wrap) return; var total = comp.items.reduce(function (a, b) { return a + (parseFloat(b.horas) || 0); }, 0); var pct = comp.meta > 0 ? Math.min(100, total / comp.meta * 100) : 0; var items = comp.items.length ? comp.items.map(function (it, i) { return '<div class="titem"><div><div class="ti-main">' + esc(it.desc || it.cat) + '</div><div class="ti-sub"><span class="ti-tag">' + esc(it.cat) + '</span> · ' + (parseFloat(it.horas) || 0) + ' h</div></div><span class="ti-rm" data-rm="' + i + '">remover</span></div>'; }).join('') : '<div class="empty">Nenhuma atividade lançada ainda.</div>'; wrap.innerHTML = '<div class="miniprog" style="margin-bottom:var(--s4)"><div class="mt"><span>Horas complementares</span><b>' + total + ' / ' + comp.meta + ' h</b></div><div class="mbar"><div class="mf" style="width:' + pct + '%"></div></div></div><div class="addrow"><select id="comp-cat"><option>Eventos/Palestras</option><option>Cursos</option><option>Iniciação Científica</option><option>Monitoria</option><option>Extensão</option><option>Publicação</option><option>Visita técnica</option><option>Outro</option></select><input class="grow" id="comp-desc" placeholder="Descrição"><input class="mini" id="comp-h" type="number" placeholder="horas"><button class="add" id="comp-add">Adicionar</button><label>meta <input class="mini" id="comp-meta" type="number" value="' + comp.meta + '"></label></div>' + items; }
+  (function () { var w = document.getElementById('comp-wrap'); if (w) { w.addEventListener('click', function (e) { var a = e.target.closest('#comp-add'); if (a) { var cat = document.getElementById('comp-cat').value, desc = document.getElementById('comp-desc').value, h = document.getElementById('comp-h').value; if (!h) { return; } comp.items.push({ cat: cat, desc: desc, horas: h }); store.set('bp_comp', comp); renderComp(); renderVisao(); flashSave(); return; } var rm = e.target.closest('.ti-rm'); if (rm) { comp.items.splice(+rm.getAttribute('data-rm'), 1); store.set('bp_comp', comp); renderComp(); renderVisao(); flashSave(); } }); w.addEventListener('change', function (e) { if (e.target.id === 'comp-meta') { comp.meta = parseFloat(e.target.value) || 0; store.set('bp_comp', comp); renderComp(); renderVisao(); flashSave(); } }); } })();
+
+  /* ===== PLANEJADOR ===== */
+  function chOfOptNode(nd) { return CH_BY_NAME[nd.n] || 30; }
+  function optNodes() { return GNODES.filter(function (n) { return n.opt; }); }
+  function renderPlanner() { var pool = document.getElementById('pool-items'); var grid = document.getElementById('plan-grid'); if (!pool || !grid) return; var periods = [3, 4, 5, 7, 8, 9]; grid.innerHTML = periods.map(function (p) { return '<div class="plan-col" data-p="' + p + '"><div class="pct">' + p + 'º período</div><div class="pch" id="pch-' + p + '"></div><div class="pdrop" id="drop-' + p + '"></div></div>'; }).join(''); pool.innerHTML = ''; optNodes().forEach(function (o) { if (plan[o.id] === undefined) { pool.appendChild(chip(o, null)); } }); periods.forEach(function (p) { var d = document.getElementById('drop-' + p); optNodes().forEach(function (o) { if (plan[o.id] === p) d.appendChild(chip(o, p)); }); updateColCh(p); }); attachDnD(); }
+  function chip(nd, period) { var el = document.createElement('div'); el.className = 'optchip'; el.setAttribute('draggable', 'true'); el.setAttribute('data-id', nd.id); var bad = false, warn = ''; if (period !== null) { var rel = relatives(nd.id); rel.prereqs.forEach(function (prId) { var prNode = nodeOf(prId); if (!prNode) return; var satisfied = prNode.opt ? (plan[prId] !== undefined && plan[prId] < period) : (prNode.p < period); if (!satisfied) { bad = true; warn = 'Pré: ' + prNode.n + ' (' + prNode.p + 'º)'; } }); } if (bad) el.classList.add('bad'); el.innerHTML = '<span>' + nd.n + '<small> · ' + chOfOptNode(nd) + ' h/a</small>' + (bad ? '<div class="plan-warn">⚠ ' + warn + ' antes</div>' : '') + '</span>'; return el; }
+  function updateColCh(p) { var sum = 0; optNodes().forEach(function (o) { if (plan[o.id] === p) sum += chOfOptNode(o); }); var el = document.getElementById('pch-' + p); if (el) el.textContent = sum + ' h/a planejadas'; }
+  var dragId = null;
+  function attachDnD() { document.querySelectorAll('.optchip').forEach(function (c) { c.addEventListener('dragstart', function () { dragId = c.getAttribute('data-id'); c.classList.add('dragging'); }); c.addEventListener('dragend', function () { c.classList.remove('dragging'); }); }); document.querySelectorAll('.plan-col').forEach(function (col) { col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('over'); }); col.addEventListener('dragleave', function () { col.classList.remove('over'); }); col.addEventListener('drop', function (e) { e.preventDefault(); col.classList.remove('over'); if (dragId === null) return; plan[dragId] = parseInt(col.getAttribute('data-p'), 10); store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); }); var pool = document.getElementById('plan-pool'); if (pool) { pool.addEventListener('dragover', function (e) { e.preventDefault(); }); pool.addEventListener('drop', function (e) { e.preventDefault(); if (dragId === null) return; delete plan[dragId]; store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); } }
+
+  /* ===== CALENDÁRIO ===== */
+  var calendarCurrentDate = new Date(2026, 7, 1);
+  function renderCalendario() {
+    var grid = document.getElementById('calendar-days-grid'); var monthTitle = document.getElementById('cal-month-title'); var statsBox = document.getElementById('cal-stats-box'); if (!grid || !monthTitle || !statsBox) return;
+    grid.innerHTML = ''; var year = calendarCurrentDate.getFullYear(); var month = calendarCurrentDate.getMonth();
+    var mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    monthTitle.textContent = mesesNomes[month] + ' ' + year;
+    var totalDaysOficial = MONTHLY_DAYS_OFICIAL[month + 1] !== undefined ? MONTHLY_DAYS_OFICIAL[month + 1] : '--';
+    statsBox.innerHTML = 'Dias letivos oficiais no mês: <b>' + totalDaysOficial + '</b>';
+    var diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    grid.insertAdjacentHTML('beforeend', diasSemana.map(function (d) { return '<div class="calendar-weekday">' + d + '</div>'; }).join(''));
+    var firstDayIndex = new Date(year, month, 1).getDay(); var lastDay = new Date(year, month + 1, 0).getDate(); var prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (var i = firstDayIndex; i > 0; i--) { var d = prevMonthLastDay - i + 1; grid.appendChild(createDayCell(year, month - 1, d, true)); }
+    var today = new Date();
+    for (var day = 1; day <= lastDay; day++) { var isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year; grid.appendChild(createDayCell(year, month, day, false, isToday)); }
+    var totalCellsSoFar = firstDayIndex + lastDay; var remainingCells = (7 - (totalCellsSoFar % 7)) % 7;
+    for (var dayNext = 1; dayNext <= remainingCells; dayNext++) { grid.appendChild(createDayCell(year, month + 1, dayNext, true)); }
+  }
+  function createDayCell(year, month, day, isOtherMonth, isToday) {
+    var cell = document.createElement('div'); cell.className = 'calendar-day' + (isOtherMonth ? ' other-month' : '') + (isToday ? ' today' : '');
+    var dayNum = document.createElement('span'); dayNum.className = 'calendar-day-num'; dayNum.textContent = day; cell.appendChild(dayNum);
+    var formattedMonth = String(month + 1).padStart(2, '0'); var formattedDay = String(day).padStart(2, '0'); var dateString = year + '-' + formattedMonth + '-' + formattedDay;
+    var eventsContainer = document.createElement('div'); eventsContainer.className = 'calendar-events-wrap';
+    if (typeof CALENDAR_DB !== 'undefined') { CALENDAR_DB.forEach(function (ev) { if (ev.date === dateString) { eventsContainer.appendChild(createEventPill(ev, true, formattedMonth, formattedDay)); } }); }
+    agenda.forEach(function (ev, idx) { if (ev.date === dateString) { var eventCopy = Object.assign({}, ev); eventCopy.index = idx; eventsContainer.appendChild(createEventPill(eventCopy, false, formattedMonth, formattedDay)); } });
+    cell.appendChild(eventsContainer); return cell;
+  }
+  function createEventPill(ev, isOficial, m, d) {
+    var pill = document.createElement('div'); pill.className = 'calendar-event-pill'; pill.title = ev.title + ' (' + ev.type + ')';
+    var colorVar = '--cal-user';
+    if (isOficial) { if (ev.type === 'Ensino & Aulas') colorVar = '--cal-ensino'; else if (ev.type === 'Matrículas & Ajustes') colorVar = '--cal-matricula'; else if (ev.type === 'Prazos & Trancamento') colorVar = '--cal-prazos'; else if (ev.type === 'TCC, Estágio & Ext.') colorVar = '--cal-tcc'; else if (ev.type === 'Avaliação & Exames') colorVar = '--cal-aval'; else if (ev.type === 'Feriados & Recessos') colorVar = '--cal-feriado'; }
+    pill.style.backgroundColor = 'var(' + colorVar + ')';
+    pill.innerHTML = (isOficial ? '<span class="badge-ofic">✓</span> ' : '') + esc(ev.title);
+    pill.addEventListener('click', function (e) { e.stopPropagation(); openEventDetailsModal(ev, isOficial, colorVar); });
+    return pill;
+  }
+
+  /* ===== MODAL DE EVENTOS ===== */
+  var modalOverlay = document.getElementById('cal-event-modal-overlay');
+  var closeBtn = document.getElementById('cal-modal-close-btn');
+  function openEventDetailsModal(ev, isOficial, colorVar) {
+    var bgHeader = document.getElementById('cal-modal-header-bg'); if (bgHeader) bgHeader.style.backgroundColor = 'var(' + colorVar + ')';
+    var catElem = document.getElementById('cal-modal-category'); if (catElem) catElem.textContent = ev.type;
+    var titleElem = document.getElementById('cal-modal-title'); if (titleElem) titleElem.textContent = ev.title;
+    var dateStrElem = document.getElementById('cal-modal-date-str');
+    if (dateStrElem) {
+      if (ev.date) { var dateParts = ev.date.split('-'); var parsedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; var dateStr = parsedDate.toLocaleDateString('pt-BR', options); dateStrElem.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1); } else { dateStrElem.textContent = "Sem data cadastrada"; }
+    }
+    var originContainer = document.getElementById('cal-modal-origin');
+    if (originContainer) {
+      if (!isOficial) { originContainer.innerHTML = 'Agenda Pessoal / Customizada <br><button id="btn-delete-cal-event" class="badge bad" style="margin-top: 8px; border: none; cursor: pointer;">Excluir este evento</button>'; var delBtn = document.getElementById('btn-delete-cal-event'); if (delBtn) delBtn.onclick = function () { if (confirm("Deseja realmente apagar este evento de sua agenda?")) { agenda.splice(ev.index, 1); store.set('bp_agenda', agenda); if (modalOverlay) modalOverlay.style.display = 'none'; renderCalendario(); renderVisao(); renderAgenda(); flashSave(); } }; } else { originContainer.textContent = 'Oficial — Deliberação CGRAD 25/2026 (CEFET-MG)'; }
+    }
+    var descElem = document.getElementById('cal-modal-desc'); if (descElem) descElem.innerHTML = ev.desc ? esc(ev.desc) : 'Sem descrição disponível para este evento.';
+    if (modalOverlay) modalOverlay.style.display = 'flex';
+  }
+  if (closeBtn) closeBtn.addEventListener('click', function () { if (modalOverlay) modalOverlay.style.display = 'none'; });
+  if (modalOverlay) modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) { modalOverlay.style.display = 'none'; } });
+  var calPrev = document.getElementById('cal-prev'); if (calPrev) calPrev.addEventListener('click', function () { calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1); renderCalendario(); });
+  var calNext = document.getElementById('cal-next'); if (calNext) calNext.addEventListener('click', function () { calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1); renderCalendario(); });
+
+  /* ===== KANBAN DE OPTATIVAS (modal de ementa) ===== */
+  var optKanban = document.getElementById('opt-kanban-board');
+  if (optKanban) {
+    optKanban.addEventListener('click', function (e) {
+      var card = e.target.closest('.kanban-card'); if (!card) return;
+      var optId = card.getAttribute('data-opt-id'); var data = OPT_CATALOGUE[optId]; if (!data) return;
+      var bgHeader = document.getElementById('cal-modal-header-bg'); if (bgHeader) bgHeader.style.backgroundColor = 'var(' + data.color + ')';
+      var catElem = document.getElementById('cal-modal-category'); if (catElem) catElem.textContent = 'Departamento: ' + data.dept;
+      var titleElem = document.getElementById('cal-modal-title'); if (titleElem) titleElem.textContent = data.title + ' (' + data.code + ')';
+      var dateStrElem = document.getElementById('cal-modal-date-str'); if (dateStrElem) dateStrElem.textContent = data.hours + ' · ' + data.credits + ' Créditos';
+      var originContainer = document.getElementById('cal-modal-origin'); if (originContainer) originContainer.innerHTML = '<b>Requisitos Acadêmicos exigidos:</b><br>' + esc(data.prereqs);
+      var descElem = document.getElementById('cal-modal-desc'); if (descElem) descElem.innerHTML = esc(data.desc);
+      if (modalOverlay) modalOverlay.style.display = 'flex';
+    });
+  }
+
+  /* ===== BACKUPS E ADMIN ===== */
+  var KEYS = ['bp_faltas', 'bp_rooms', 'bp_opt', 'bp_plan', 'bp_curperiod', 'bp_notes', 'bp_evals', 'bp_comp', 'bp_agenda', 'bp_theme', 'bp_dataversion', 'bp_expanded'];
+  var fabBackup = document.getElementById('fab-backup'); if (fabBackup) fabBackup.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); var data = {}; KEYS.forEach(function (k) { var v = localStorage.getItem(k); if (v !== null) data[k] = v; }); data.__exported = new Date().toISOString(); var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'biopulse-backup.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 120); flashSave(); });
+  var fabImport = document.getElementById('fab-import'); if (fabImport) fabImport.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); var impFile = document.getElementById('import-file'); if (impFile) impFile.click(); });
+  var impFileElem = document.getElementById('import-file'); if (impFileElem) impFileElem.addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { try { var data = JSON.parse(rd.result); if (!confirm('Restaurar este backup? Os dados atuais serão substituídos.')) return; KEYS.forEach(function (k) { if (data[k] !== undefined) localStorage.setItem(k, data[k]); }); location.reload(); } catch (err) { alert('Arquivo inválido.'); } }; rd.readAsText(f); e.target.value = ''; });
+  var fabPrint = document.getElementById('fab-print'); if (fabPrint) fabPrint.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); window.print(); });
+  var fabClear = document.getElementById('fab-clear'); if (fabClear) fabClear.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); if (confirm('Limpar TODOS os dados salvos? O tema será mantido.')) { KEYS.forEach(function (k) { if (k !== 'bp_theme') localStorage.removeItem(k); }); location.reload(); } });
+
+  /* ===== INTERAÇÕES DO KANBAN DE DISCIPLINAS OBRIGATÓRIAS ===== */
+  var SUBJ_CATALOGUE = {
+    bioe1: { code: 'G00BIOE1.01', title: 'Bioestatística I', dept: 'DECOM', hours: '30 h/a', credits: '2', color: '--decom-color', prereqs: 'Nenhum', desc: 'Introdução à bioestatística. Estatística descritiva, representações gráficas e tabelas de frequência. Noções fundamentais de probabilidade e distribuições amostrais.' },
+    hghu: { code: 'G00HGHU0.01', title: 'Histologia Geral Humana', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Nenhum', desc: 'Estudo microscópico dos tecidos epitelial, conjuntivo, cartilaginoso, ósseo, muscular e nervoso. Correlação morfofuncional celular e aplicação prática laboratorial histológica.' },
+    quim: { code: 'G00QUIM1.01', title: 'Química Geral', dept: 'DEQUI', hours: '60 h/a', credits: '4', color: '--dequi-color', prereqs: 'Nenhum', desc: 'Estrutura atômica e propriedades periódicas dos elementos. Ligações químicas e forças intermoleculares. Termoquímica, cinética química básica e princípios de equilíbrio em soluções.' },
+    bfla: { code: 'G00BFLA0.01', title: 'Biossegurança e Fundamentos de Laboratório', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Nenhum', desc: 'Normas de segurança laboratorial, boas práticas e níveis de biossegurança (NB-1 a NB-4). Gerenciamento de resíduos químicos e biológicos e equipamentos de proteção coletiva e individual.' },
+    cspb: { code: 'G00CSPB0.01', title: 'Contexto Social e Profissional da Biotecnologia', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Histórico da biotecnologia como ciência interdisciplinar. Campo de atuação do bacharel, ética profissional e o papel da inovação biotecnológica no desenvolvimento social.' },
+    soci: { code: 'G00INSO0.01', title: 'Introdução à Sociologia', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Conceitos clássicos da sociologia e sua relação com a tecnologia. Análise do impacto das ciências biológicas e corporações científicas na dinâmica das sociedades contemporâneas.' },
+    fite: { code: 'G00FITE0.01', title: 'Filosofia da Tecnologia', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Reflexão crítica sobre as dimensões éticas, epistemológicas e políticas da tecnologia. A tecnociência e a redefinição de conceitos como natureza e vida humana.' },
+    lqui: { code: 'G00LQUI1.01', title: 'Laboratório de Química Geral', dept: 'DEQUI', hours: '30 h/a', credits: '2', color: '--dequi-color', prereqs: 'Nenhum (Co-requisito: Química Geral)', desc: 'Técnicas experimentais básicas, pesagem, preparo de soluções, volumetria e titulação. Reações químicas e análise qualitativa prática de equilíbrio químico.' },
+    bcel: { code: 'G00BCEL0.01', title: 'Biologia Celular', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Histologia Geral Humana', desc: 'Morfologia, ultraestrutura e fisiologia celular. Transporte de membrana, citoesqueleto, organelas citoplasmáticas, tráfego de vesículas, sinalização celular e divisão mitótica.' },
+    epco: { code: 'G00EPCO1.01', title: 'Estrutura e Propriedades dos Compostos Orgânicos', dept: 'DEQUI', hours: '60 h/a', credits: '4', color: '--dequi-color', prereqs: 'Química Geral', desc: 'Funções orgânicas, nomenclatura e propriedades físicas dos compostos. Isomeria, efeitos eletrônicos e introdução aos mecanismos básicos de reações orgânicas e macromoléculas.' },
+    mcie: { code: 'G00MCIE1.01', title: 'Metodologia Científica', dept: 'DCSA', hours: '30 h/a', credits: '2', color: '--dcsa-color', prereqs: 'Nenhum', desc: 'Fundamentos do método científico. Pesquisa bibliográfica, leitura analítica e normas técnicas para estruturação de trabalhos acadêmicos e monografias.' },
+    paor: { code: 'G00PAOR0.01', title: 'Psicologia Aplicada às Organizações', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Processos de interação humana nas organizações. Comportamento grupal, liderança, motivação, gestão de conflitos e desenvolvimento de equipes multidisciplinares.' },
+    bioq: { code: 'G00BBAS0.01', title: 'Bioquímica Básica', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Estrutura e Propriedades dos Compostos Orgânicos', desc: 'Estrutura e propriedades de biomoléculas (aminoácidos, proteínas, carboidratos e lipídeos). Enzimas e cinética enzimática. Introdução ao metabolismo celular.' },
+    gen: { code: 'G00GBC10.01', title: 'Genética Básica e Citogenética', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Biologia Celular', desc: 'Leis mendelianas da hereditariedade e extensões. Estrutura e dinâmica dos cromossomos, mutações cromossômicas numéricas e estruturais e mapeamento gênico.' },
+    srbi: { code: 'G00SRBI0.01', title: 'Segurança e Regulamentação em Biotecnologia', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Biossegurança e Fundamentos de Laboratório', desc: 'Legislação nacional sobre biossegurança de OGMs (Lei de Biossegurança). Órgãos reguladores, CTNBio, comitês institucionais e regulamentação de biofármacos.' },
+    bioe2: { code: 'G00BIOE2.01', title: 'Bioestatística II', dept: 'DECOM', hours: '30 h/a', credits: '2', color: '--decom-color', prereqs: 'Bioestatística I', desc: 'Estatística inferencial. Testes de hipóteses paramétricos e não paramétricos. Análise de variância (ANOVA), correlação linear e regressão linear simples.' },
+    qate: { code: 'G00QATE0.01', title: 'Química Analítica Teórica', dept: 'DEQUI', hours: '30 h/a', credits: '2', color: '--dequi-color', prereqs: 'Química Geral', desc: 'Equilíbrio iônico em solução aquosa (ácido-base, precipitação, complexação e oxi-redução). Fundamentos teóricos das análises químicas quantitativas clássicas.' },
+    mveg: { code: 'G00MVEG0.01', title: 'Morfofisiologia Vegetal', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Histologia Geral Humana + Biologia Celular', desc: 'Anatomia e morfologia dos órgãos vegetativos das plantas. Relações hídricas, nutrição mineral, transporte no floema, respiração vegetal e fitohormônios.' },
+    imic: { code: 'G00IMIC0.01', title: 'Instrumentação em Bioquímica Aplicada', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Química Analítica Prática + Microbiologia Geral', desc: 'Fundamentos e uso prático de espectrofotometria, centrifugação, técnicas cromatográficas instrumentais e eletroforese aplicadas à purificação de macromoléculas.' },
+    mger: { code: 'G00MGER0.01', title: 'Microbiologia Geral', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Biologia Celular', desc: 'Estrutura, nutrição e fisiologia microbiana de bactérias, fungos e vírus. Controle do crescimento microbiano e técnicas de cultivo puro laboratorial.' },
+    fghu: { code: 'G00FGHU0.01', title: 'Fisiologia Geral Humana', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Histologia Geral Humana', desc: 'Fisiologia integrada dos sistemas nervoso, cardiovascular, respiratório, renal, endócrino e digestório humano. Homeostase e mecanismos de controle.' },
+    imb: { code: 'G00IBAS0.01', title: 'Imunologia Básica', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Histologia Geral Humana', desc: 'Órgãos e células do sistema imune. Resposta imune inata e adquirida, imunidade humoral e celular. Antígenos, anticorpos e MHC.' },
+    genap: { code: 'G00GEAP0.01', title: 'Genética Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Genética Básica e Citogenética', desc: 'Genética de populações, forças evolutivas e equilíbrio de Hardy-Weinberg. Genética quantitativa, herdabilidade e melhoramento genético direcionado.' },
+    qapr: { code: 'G00QAPR0.01', title: 'Química Analítica Prática', dept: 'DEQUI', hours: '30 h/a', credits: '2', color: '--dequi-color', prereqs: 'Laboratório de Química Geral', desc: 'Práticas laboratoriais de gravimetria e titulações volumétricas ácido-base, de precipitação, complexação e oxirredução aplicada.' },
+    mpes: { code: 'G00MPES0.05', title: 'Metodologia da Pesquisa', dept: 'DCSA', hours: '30 h/a', credits: '2', color: '--dcsa-color', prereqs: 'Metodologia Científica', desc: 'Estruturação de projetos de pesquisa científica. Elaboração do problema, hipóteses, cronogramas, metodologias aplicadas e ética na pesquisa.' },
+    bioinf: { code: 'G00IBIO0.01', title: 'Introdução à Bioinformática', dept: 'DECOM', hours: '60 h/a', credits: '4', color: '--decom-color', prereqs: 'Introdução à Bioinformática', desc: 'Bancos de dados genômicos e de proteínas. Alinhamento de sequências locais e globais (BLAST, FASTA), filogenia molecular e predição estrutural.' },
+    ima: { code: 'G00IAPL0.01', title: 'Imunologia Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Imunologia Básica', desc: 'Métodos imunodiagnósticos (ELISA, Western Blot, Citometria, Imunoflorescência). Imunopatologias, hipersensibilidades, autoimunidade e vacinas.' },
+    microap: { code: 'G00BAPL0.01', title: 'Microbiologia Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Microbiologia Geral', desc: 'Biotecnologia microbiológica aplicada a alimentos, ecologia microbiana e biorremediação. Isolamento de cepas industriais de interesse.' },
+    bmol: { code: 'G00BMAP0.01', title: 'Biologia Molecular Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Bioquímica Básica + Genética Básica', desc: 'Estrutura, replicação e transcrição do DNA. Tradução e regulação da expressão gênica. Técnicas aplicadas: PCR, clonagem de DNA e enzimas de restrição.' },
+    biof: { code: 'G00BIOF0.01', title: 'Biofísica', dept: 'DF', hours: '60 h/a', credits: '4', color: '--df-color', prereqs: 'Nenhum', desc: 'Aspectos físicos dos processos biológicos: termodinâmica biológica, bioeletricidade de membranas, óptica da visão e radiações ionizantes aplicadas.' },
+    farm: { code: 'G00FFAR0.01', title: 'Fundamentos em Farmacologia', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Fisiologia Geral Humana', desc: 'Farmacocinética (absorção, distribuição, metabolismo, eliminação) e farmacodinâmica de drogas. Mecanismos de ação de fármacos nos sistemas corporais.' },
+    bveg: { code: 'G00BVEG0.01', title: 'Biotecnologia Vegetal', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Morfofisiologia Vegetal', desc: 'Cultura de tecidos vegetais in vitro, micropropagação e embriogênese somática. Plantas transgênicas (OGMs), melhoramento vegetal e biobalística.' },
+    bani: { code: 'G00BANI0.01', title: 'Biotecnologia Animal', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Histologia Geral Humana + Fisiologia Geral Humana', desc: 'Cultura de células animais in vitro. Transgênese animal, clonagem, fertilização in vitro, terapia celular e engenharia de tecidos biológicos aplicada.' },
+    enme: { code: 'G00ENME0.01', title: 'Engenharia Metabólica', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Bioquímica Aplicada + Biologia Molecular Aplicada', desc: 'Análise estrutural de fluxos metabólicos em células. Manipulação molecular de vias metabólicas para otimização da síntese de compostos de interesse industrial.' },
+    empr_reg: { code: 'G00EMPN0.01', title: 'Empreendedorismo Modelo e Plano de Negócios', dept: 'DCSA', hours: '60 h/a', credits: '4', color: '--dcsa-color', prereqs: 'Nenhum', desc: 'Estratégias de criação e modelagem de novos negócios biotecnológicos inovadores. Canvas, plano de negócios, análise de mercado e captação de recursos.' },
+    tcc1: { code: 'G00ATCC1.03', title: 'TCC I', dept: 'DEBIO', hours: '15 h/a', credits: '1', color: '--debio-color', prereqs: 'Metodologia da Pesquisa', desc: 'Orientação direta para desenvolvimento do projeto de monografia do Trabalho de Conclusão de Curso de biotecnologia.' },
+    paras: { code: 'G00PAPL0.01', title: 'Parasitologia Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Microbiologia Geral', desc: 'Biologia e morfologia de protozoários e helmintos de interesse médico humano. Epidemiologia, profilaxia, diagnóstico clínico e controle biológico.' },
+    gpge: { code: 'G00GPGE0.01', title: 'Genômica e Pós-Genômica', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Biologia Molecular Aplicada', desc: 'Metodologias de sequenciamento em larga escala (NGS). Análise transcriptômica, proteômica funcional e espectrometria de massas em sistemas.' },
+    bhum: { code: 'G00BHUM0.01', title: 'Biotecnologia Humana', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Fisiologia Geral Humana + Imunologia Básica', desc: 'Diagnóstico molecular de patologias, terapia gênica recombinante, imunoterapia oncológica e produção laboratorial de vacinas e anticorpos.' },
+    etox: { code: 'G00ETOX0.01', title: 'Ecotoxicologia', dept: 'DCTA', hours: '60 h/a', credits: '4', color: '--dcta-color', prereqs: 'Fisiologia Geral Humana + Imunologia Básica', desc: 'Efeito de agentes poluentes, xenobióticos e toxinas químicas em ecossistemas e saúde humana. Ensaios biológicos com bioindicadores.' },
+    tfbi: { code: 'G00TFBI0.01', title: 'Tecnologia de Fermentações e Bioprocessos', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', prereqs: 'Microbiologia Aplicada + Bioquímica Aplicada', desc: 'Biorreatores e cinéticas de processos fermentativos em escala. Modelagem e controle operacional, purificação (downstream) de bioprodutos industriais.' },
+    estag_sup: { code: 'G00AESU0.02', title: 'Estágio Supervisionado', dept: 'DCSA', hours: '15 h/a', credits: '1', color: '--dcsa-color', prereqs: 'Nenhum', desc: 'Concessão acadêmica de acompanhamento de atividades de inserção e vivência profissional de estágio supervisionado.' },
+    tcc2: { code: 'G00ATCC2.03', title: 'TCC II', dept: 'DEBIO', hours: '15 h/a', credits: '1', color: '--debio-color', prereqs: 'TCC I', desc: 'Apresentação escrita e defesa pública da monografia final de curso diante de uma banca avaliadora de professores.' },
+    nano: { code: 'G00NBIO0.01', title: 'Nanobiotecnologia', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Nanobiotecnologia', desc: 'Síntese de nanomateriais biogênicos e engenharia de biossensores diagnósticos. Nanocarreadores lipídicos para entrega de vacinas de mRNA.' },
+    bioe: { code: 'G00BETI0.01', title: 'Bioética', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Bioética', desc: 'Teorias éticas aplicadas às experimentações com animais e seres humanos. Discussões bioéticas sobre edição de genomas (CRISPR).' },
+    estag_ob: { code: 'G00ECOB0.03', title: 'Estágio Curricular Obrigatório - Biotecnologia', dept: 'DCSA', hours: '510 h/a', credits: '34', color: '--dcsa-color', prereqs: 'Atividade de Estágio Supervisionado', desc: 'Estágio curricular prático obrigatório de vivência no setor produtivo em indústrias, laboratórios ou centros de pesquisa.' }
+  };
+
+  var gradeKanban = document.getElementById('grade-kanban-board');
+  if (gradeKanban) {
+    gradeKanban.addEventListener('click', function (e) {
+      var card = e.target.closest('.kanban-card'); if (!card) return;
+      var subjId = card.getAttribute('data-subj-id'); var data = SUBJ_CATALOGUE[subjId]; if (!data) return;
+      var bgHeader = document.getElementById('cal-modal-header-bg'); if (bgHeader) bgHeader.style.backgroundColor = 'var(' + data.color + ')';
+      var catElem = document.getElementById('cal-modal-category'); if (catElem) catElem.textContent = 'Departamento: ' + data.dept;
+      var titleElem = document.getElementById('cal-modal-title'); if (titleElem) titleElem.textContent = data.title + ' (' + data.code + ')';
+      var dateStrElem = document.getElementById('cal-modal-date-str'); if (dateStrElem) dateStrElem.textContent = data.hours + ' · ' + data.credits + ' Créditos';
+      var originContainer = document.getElementById('cal-modal-origin'); if (originContainer) originContainer.innerHTML = '<b>Requisitos Acadêmicos exigidos:</b><br>' + esc(data.prereqs);
+      var descElem = document.getElementById('cal-modal-desc'); if (descElem) descElem.innerHTML = esc(data.desc);
+      if (modalOverlay) modalOverlay.style.display = 'flex';
+    });
+  }
+
+  /* ========================================================
+     LÓGICA DO TUTORIAL INTERATIVO (ONBOARDING)
+     ======================================================== */
+  var onboardingOverlay = document.getElementById('onboarding-overlay');
+  var onboardingCloseBtn = document.getElementById('onboarding-close-btn');
+  var onboardingDismissBtn = document.getElementById('onboarding-dismiss-btn');
+  var onboardingPrevBtn = document.getElementById('onboarding-prev-btn');
+  var onboardingNextBtn = document.getElementById('onboarding-next-btn');
+  var onboardingStepCounter = document.getElementById('onboarding-step-counter');
+  var slides = document.querySelectorAll('.onboarding-slide');
+  var dots = document.querySelectorAll('.onboarding-dot');
+  var currentSlide = 1;
+  var totalSlides = slides.length;
+
+  function openOnboarding() {
+    currentSlide = 1;
+    updateSlideDisplay();
+    if (onboardingOverlay) onboardingOverlay.classList.add('open');
+  }
+
+  function closeOnboarding(markAsSeen) {
+    if (onboardingOverlay) onboardingOverlay.classList.remove('open');
+    if (markAsSeen) { store.set('bp_onboarding_seen', true); }
+  }
+
+  function updateSlideDisplay() {
+    slides.forEach(function(s) {
+      var slideNum = parseInt(s.getAttribute('data-slide'), 10);
+      s.classList.toggle('active', slideNum === currentSlide);
+    });
+
+    dots.forEach(function(d) {
+      var dotNum = parseInt(d.getAttribute('data-dot'), 10);
+      d.classList.toggle('active', dotNum === currentSlide);
+    });
+
+    if (onboardingStepCounter) { onboardingStepCounter.textContent = 'Etapa ' + currentSlide + ' de ' + totalSlides; }
+    if (onboardingPrevBtn) onboardingPrevBtn.disabled = (currentSlide === 1);
+    
+    if (onboardingNextBtn) {
+      if (currentSlide === totalSlides) {
+        onboardingNextBtn.textContent = 'Concluir';
+      } else {
+        onboardingNextBtn.textContent = 'Próximo';
+      }
+    }
+
+    if (onboardingDismissBtn) {
+      if (currentSlide === 1) {
+        onboardingDismissBtn.classList.remove('hidden');
+      } else {
+        onboardingDismissBtn.classList.add('hidden');
+      }
+    }
+  }
+
+  function nextSlide() {
+    if (currentSlide < totalSlides) {
+      currentSlide++;
+      updateSlideDisplay();
+    } else {
+      closeOnboarding(true);
+    }
+  }
+
+  function prevSlide() {
+    if (currentSlide > 1) {
+      currentSlide--;
+      updateSlideDisplay();
+    }
+  }
+
+  if (onboardingCloseBtn) onboardingCloseBtn.addEventListener('click', function() { closeOnboarding(true); });
+  if (onboardingDismissBtn) onboardingDismissBtn.addEventListener('click', function() { closeOnboarding(true); });
+  if (onboardingNextBtn) onboardingNextBtn.addEventListener('click', nextSlide);
+  if (onboardingPrevBtn) onboardingPrevBtn.addEventListener('click', prevSlide);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && onboardingOverlay && onboardingOverlay.classList.contains('open')) {
+      closeOnboarding(true);
+    }
+  });
+
+  dots.forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      currentSlide = parseInt(dot.getAttribute('data-dot'), 10);
+      updateSlideDisplay();
+    });
+  });
+
+  var toolsMenu = document.getElementById('tools-menu');
+  if (toolsMenu && !document.getElementById('fab-tutorial')) {
+    var fabTutorial = document.createElement('button');
+    fabTutorial.id = 'fab-tutorial';
+    fabTutorial.title = 'Abrir Tutorial';
+    fabTutorial.setAttribute('aria-label', 'Abrir Tutorial');
+    fabTutorial.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+    
+    fabTutorial.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (tools) tools.classList.remove('open');
+      openOnboarding();
+    });
+
+    toolsMenu.insertBefore(fabTutorial, toolsMenu.firstChild);
+  }
+
+  /* DEMO INTERATIVA - SLIDE 3 */
+  var demoFaltas = 2;
+  var demoFaltaMinus = document.getElementById('demo-falta-minus');
+  var demoFaltaPlus = document.getElementById('demo-falta-plus');
+  var demoFaltasVal = document.getElementById('demo-faltas-val');
+  var demoFaltasFill = document.getElementById('demo-faltas-fill');
+  var demoBadgeStatus = document.getElementById('demo-badge-status');
+
+  function updateDemoFaltas() {
+    if (!demoFaltasVal || !demoFaltasFill) return;
+    demoFaltasVal.textContent = demoFaltas + ' fls';
+    var pct = Math.min(100, Math.round((demoFaltas / 6) * 100));
+    demoFaltasFill.style.width = pct + '%';
+    
+    if (demoFaltas > 5) {
+      demoBadgeStatus.textContent = 'Reprovado por Falta';
+      demoBadgeStatus.className = 'badge bad';
+    } else if (demoFaltas >= 4) {
+      demoBadgeStatus.textContent = 'Atenção';
+      demoBadgeStatus.className = 'badge warn';
+    } else {
+      demoBadgeStatus.textContent = 'Aprovado';
+      demoBadgeStatus.className = 'badge ok';
+    }
+  }
+
+  if (demoFaltaMinus) { demoFaltaMinus.addEventListener('click', function() { if (demoFaltas > 0) { demoFaltas--; updateDemoFaltas(); } }); }
+  if (demoFaltaPlus) { demoFaltaPlus.addEventListener('click', function() { if (demoFaltas < 6) { demoFaltas++; updateDemoFaltas(); } }); }
+
+  /* DEMO INTERATIVA - SLIDE 5 */
+  var demoNode1 = document.getElementById('demo-node-1');
+  var demoNode2 = document.getElementById('demo-node-2');
+  var demoEdgeLine = document.getElementById('demo-edge-line');
+
+  if (demoNode1 && demoNode2 && demoEdgeLine) {
+    demoNode1.addEventListener('click', function() {
+      demoNode1.classList.toggle('active');
+      demoEdgeLine.classList.toggle('active');
+      demoNode2.classList.toggle('active');
+    });
+  }
+
+  /* DEMO INTERATIVA - SLIDE 7 */
+  var demoCalTrigger = document.getElementById('demo-cal-trigger');
+  if (demoCalTrigger) {
+    demoCalTrigger.addEventListener('click', function() {
+      if (typeof openEventDetailsModal === 'function') {
+        openEventDetailsModal({
+          title: 'Início do Semestre Letivo 2026.2',
+          type: 'Ensino & Aulas',
+          date: '2026-08-05',
+          desc: 'Aula inaugural e recepção oficial das turmas de veteranos de Biotecnologia e Engenharia.'
+        }, true, '--cal-ensino');
+      }
+    });
+  }
+
+  /* Abertura automática no primeiro acesso */
+  setTimeout(function() {
+    var hasSeen = store.get('bp_onboarding_seen', false);
+    if (!hasSeen) { openOnboarding(); }
+  }, 400);
+
+  /* ===== INIT ===== */
+  curSem = String(curPeriod);
+  renderNotas(); 
+  renderHorarios(); 
+  renderPlanner(); 
+  renderComp(); 
+  renderVisao(); 
+  observeReveals(); 
+  renderCalendario();
+});

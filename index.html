@@ -1,0 +1,961 @@
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<title>BioPulse — Painel de Formação Biotecnologia</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="glow"></div>
+<div id="progress"></div>
+
+<nav id="nav">
+  <span class="brand">BioPulse</span>
+  <button class="lnk active" data-page="hero">Início</button>
+  <button class="lnk" data-page="painel">Painel</button>
+  <button class="lnk" data-page="calendario">Calendário</button>
+  <button class="lnk" data-page="grade">Grade</button>
+  <button class="lnk" data-page="optativas">Optativas</button>
+  <button class="theme-tg" id="theme-tg" title="Alternar tema" aria-label="Alternar tema">
+    <svg id="theme-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" stroke-linecap="round"></path></svg>
+  </button>
+</nav>
+
+<!-- ============ INÍCIO ============ -->
+<div class="page on" id="page-hero">
+<section id="hero">
+  <canvas class="biosoup" id="soup-hero"></canvas>
+  <div class="dots"></div><div class="blob b1"></div><div class="blob b2"></div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <span class="hero-tag reveal"><span class="pulse"></span> CEFET-MG · Nova Suíça · 2026.1 · grade oficial</span>
+        <h1 class="reveal d1">Biotecnologia CEFET-MG</h1>
+        <p class="sub reveal d2">Seu companheiro dos 9 períodos: estrutura do curso, controle e consulta de optativas por pré-requisitos, calendário e painel acadêmico completo.</p>
+        <div class="hero-meta reveal d3">
+          <div><b>3.300h</b><span>Integralização</span></div>
+          <div><b>9</b><span>Períodos · noturno</span></div>
+          <div><b>2026.2</b><span>Período atualo</span></div>
+        </div>
+      </div>
+      <div class="dna3d-wrap reveal d2" id="dna3d">
+        <div class="dna3d-glowring"></div>
+        <svg class="float-mol" style="left:6%;top:12%" width="60" height="60" viewBox="0 0 60 60" aria-hidden="true"><polygon points="30,6 52,18 52,42 30,54 8,42 8,18" fill="none" stroke="#7FE0BC" stroke-width="1.6"></polygon><circle cx="30" cy="6" r="3" fill="#C2EE73"></circle><circle cx="52" cy="42" r="3" fill="#C2EE73"></circle><circle cx="8" cy="18" r="3" fill="#C2EE73"></circle></svg>
+        <svg class="float-mol" style="right:4%;bottom:14%;animation-delay:-3s" width="70" height="70" viewBox="0 0 70 70" aria-hidden="true"><circle cx="35" cy="35" r="26" fill="none" stroke="#C2EE73" stroke-width="1.4" stroke-dasharray="4 5"></circle><circle cx="35" cy="35" r="13" fill="none" stroke="#7FE0BC" stroke-width="1.4"></circle><circle cx="35" cy="9" r="3.5" fill="#7FE0BC"></circle><circle cx="48" cy="35" r="3" fill="#C2EE73"></circle></svg>
+        <div class="dna3d-stage" id="dna-stage"><div class="helix" id="helix"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <canvas class="biosoup" id="m-hist"></canvas>
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="idx">01 · História</span>
+      <h2>História da biotecnologia</h2>
+      <p class="lead">As grandes viradas que moldaram a área.</p>
+    </div>
+    <div class="htl-wrap">
+      <div class="htl">
+        <div class="hitem reveal"><div class="yr">Antiguidade</div><h4>Biotecnologia tradicional</h4><p>Fermentação para pães, cervejas, vinhos e queijos — uso empírico de microrganismos.</p></div>
+        <div class="hitem reveal d1"><div class="yr">1856–1865</div><h4>Pasteur &amp; Mendel</h4><p>Pasteur funda a microbiologia; Mendel estabelece as leis da hereditariedade.</p></div>
+        <div class="hitem reveal d1"><div class="yr">1869–1944</div><h4>Os ácidos nucleicos</h4><p>Miescher descobre os ácidos nucleicos; Avery mostra que o DNA carrega a hereditariedade.</p></div>
+        <div class="hitem reveal d2"><div class="yr">1953</div><h4>A dupla-hélice</h4><p>Watson e Crick descrevem a estrutura do DNA com base na "Foto 51" de Rosalind Franklin.</p></div>
+      </div>
+      <div class="htl">
+        <div class="hitem reveal"><div class="yr">1973</div><h4>DNA recombinante</h4><p>Cohen e Boyer criam a primeira molécula recombinante — nasce a engenharia genética.</p></div>
+        <div class="hitem reveal d1"><div class="yr">1982–1996</div><h4>Insulina e clonagem</h4><p>Primeiro biofármaco recombinante; em 1996, a ovelha Dolly é clonada.</p></div>
+        <div class="hitem reveal d2"><div class="yr">2003</div><h4>Genoma Humano</h4><p>Conclusão do sequenciamento, abrindo a era da genômica e da bioinformática.</p></div>
+        <div class="hitem reveal d3"><div class="yr">2012 → hoje</div><h4>CRISPR, mRNA, biossensores</h4><p>Edição gênica (Nobel 2020) e vacinas de mRNA redefinem a fronteira da biotecnologia.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="dark-sec">
+  <canvas class="biosoup" id="soup-sci"></canvas>
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="idx">02 · Referências</span>
+      <h2>Cientistas e referências</h2>
+      <p class="lead">Pioneiros e nomes contemporâneos que definem a área — incluindo uma referência brasileira.</p>
+    </div>
+    <div class="sci-grid">
+      <div class="sci reveal"><div class="ava">GM</div><div class="sb"><h4>Gregor Mendel</h4><div class="yr">1822–1884</div><p>"Pai da genética": leis da hereditariedade com ervilhas.</p></div></div>
+      <div class="sci reveal d1"><div class="ava">LP</div><div class="sb"><h4>Louis Pasteur</h4><div class="yr">1822–1895</div><p>Fermentação microbiana, teoria dos germes e pasteurização.</p></div></div>
+      <div class="sci reveal d2"><div class="ava">RF</div><div class="sb"><h4>Rosalind Franklin</h4><div class="yr">1920–1958</div><p>A "Foto 51" foi crucial para revelar a dupla-hélice do DNA.</p></div></div>
+      <div class="sci reveal d3"><div class="ava">WC</div><div class="sb"><h4>Watson &amp; Crick</h4><div class="yr">1953 · Nobel 1962</div><p>Descreveram a estrutura em dupla-hélice do DNA.</p><span class="nb">Nobel Medicina</span></div></div>
+      <div class="sci reveal"><div class="ava">CB</div><div class="sb"><h4>Cohen &amp; Boyer</h4><div class="yr">1973</div><p>Primeira molécula de DNA recombinante.</p></div></div>
+      <div class="sci reveal d1"><div class="ava">FS</div><div class="sb"><h4>Frederick Sanger</h4><div class="yr">1918–2013</div><p>Sequenciamento de proteínas e DNA.</p><span class="nb">2× Nobel Química</span></div></div>
+      <div class="sci reveal d2"><div class="ava">DC</div><div class="sb"><h4>Doudna &amp; Charpentier</h4><div class="yr">Nobel 2020</div><p>Desenvolveram o CRISPR-Cas9 para edição de genomas.</p><span class="nb">Nobel Química</span></div></div>
+      <div class="sci reveal d3"><div class="ava">MZ</div><div class="sb"><h4>Mayana Zatz</h4><div class="yr">1947 · Brasil</div><p>Referência em genética humana (USP); doenças neuromusculares e células-tronco.</p></div></div>
+    </div>
+    <div class="note reveal">Outros nomes: <b>Chargaff</b>, <b>Morgan</b>, <b>Mullis</b> (PCR), <b>Venter</b> e <b>Collins</b> (Genoma), além de <b>Zhang</b>, <b>Church</b>, <b>Arnold</b> e <b>Karikó &amp; Weissman</b> (mRNA). <span class="flag">Conferir biografias completas</span></div>
+  </div>
+</section>
+
+<section>
+  <canvas class="biosoup" id="m-cefet"></canvas>
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="idx">03 · CEFET-MG</span>
+      <h2>O curso no CEFET-MG</h2>
+      <p class="lead">Uma das graduações mais novas da instituição — você integra a turma fundadora.</p>
+    </div>
+    <div class="cefet-zone">
+      <div>
+        <p style="font-size:14.5px;color:var(--ink-soft);font-weight:400;margin-bottom:var(--s3)">Criado pela <b style="color:var(--ink)">Deliberação CD nº 34, de 23/07/2025</b>, dentro da estratégia de ampliar a oferta de graduação do CEFET-MG. As atividades começaram em <b style="color:var(--ink)">2026.1</b>, com aula magna em <b style="color:var(--ink)">15/04/2026</b>.</p>
+        <p style="font-size:14.5px;color:var(--ink-soft);font-weight:400">Belo Horizonte abriga um <b style="color:var(--ink)">APL de Biotecnologia</b> e o parque <b style="color:var(--ink)">BH-TEC</b>, ampliando oportunidades de inovação, estágio e pesquisa.</p>
+      </div>
+      <div class="cefet-fact reveal d1">
+        <canvas class="biosoup" id="soup-cefet"></canvas>
+        <h3>Ficha do curso</h3>
+        <div class="fgrid">
+          <div class="frow"><b>Criação</b><span>Deliberação CD nº 34 · 23/07/2025</span></div>
+          <div class="frow"><b>1ª turma</b><span>Aula magna 15/04/2026 · ingresso 2026.1</span></div>
+          <div class="frow"><b>Grau</b><span>Bacharelado em Biotecnologia</span></div>
+          <div class="frow"><b>Campus</b><span>Nova Suíça · Av. Amazonas, 5253 · BH</span></div>
+          <div class="frow"><b>Turno</b><span>Noturno</span></div>
+          <div class="frow"><b>Vagas</b><span>40 por semestre · 80 por ano</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <canvas class="biosoup" id="m-struct"></canvas>
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="idx">04 · Currículo</span>
+      <h2>Estrutura do curso</h2>
+      <p class="lead">9 semestres (até 14 para integralizar), combinando obrigatórias, optativas, TCC, estágio e complementares.</p>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><div class="sv">9</div><div class="sl">semestres (4,5 anos)</div></div>
+      <div class="stat"><div class="sv">14</div><div class="sl">máx. integralização</div></div>
+      <div class="stat"><div class="sv">3.300h</div><div class="sl">relógio · 3.960 h/aula</div></div>
+      <div class="stat"><div class="sv">420 h/a</div><div class="sl">optativas (mínimo)</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <canvas class="biosoup" id="m-infos"></canvas>
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="idx">05 · Contexto</span>
+      <h2>Ecossistema do curso</h2>
+    </div>
+    <div class="infos">
+      <div class="info reveal"><div class="ib"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6" stroke="#C2EE73" stroke-width="1.7"></path></svg></div><div><h4>APL de Biotecnologia</h4><p>BH conecta empresas, universities e centros de pesquisa.</p></div></div>
+      <div class="info reveal d1"><div class="ib"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#C2EE73" stroke-width="1.7"></circle><path d="M12 7v5l3 3" stroke="#C2EE73" stroke-width="1.7" stroke-linecap="round"></path></svg></div><div><h4>BH-TEC</h4><p>Parque tecnológico — inovação, incubação e projetos aplicados.</p></div></div>
+      <div class="info reveal d2"><div class="ib"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 19V5h16v14M4 12h16" stroke="#C2EE73" stroke-width="1.7"></path></svg></div><div><h4>Multidisciplinar</h4><p>Biologia, química, engenharia, dados e gestão em equipe.</p></div></div>
+      <div class="info reveal d3"><div class="ib"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 8l7-5 7 5M5 8v8l7 5 7-5V8" stroke="#C2EE73" stroke-width="1.6" stroke-linejoin="round"></path></svg></div><div><h4>Ponte para o mercado</h4><p>Aproximação com indústrias farmacêuticas, agronegócio e inovação regional.</p></div></div>
+    </div>
+    <div class="note reveal d1"><b>Fontes.</b> Dados oficiais do CEFET-MG; história e cientistas em referências consolidadas. <span class="flag">Confirmar nos canais oficiais</span></div>
+  </div>
+</section>
+
+<section>
+  <canvas class="biosoup" id="m-areas"></canvas>
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="idx">06 · Carreira</span>
+      <h2>Áreas de atuação</h2>
+      <p class="lead">Formação multidisciplinar — saúde, agro, ambiente, indústria, energia e dados biológicos.</p>
+    </div>
+    <div class="areas">
+      <div class="area reveal"><div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" stroke="#0FA877" stroke-width="1.8"></path></svg></div><h4>Saúde &amp; Farmacêutica</h4><p>Biofármacos, vacinas, diagnóstico, células-tronco e medicina personalizada.</p></div>
+      <div class="area reveal d1"><div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3c4 4 6 8 6 12a6 6 0 0 1-12 0c0-4 2-8 6-12z" stroke="#0FA877" stroke-width="1.8"></path></svg></div><h4>Agronegócio</h4><p>OGMs, culturas resistentes, controle biológico e melhoramento.</p></div>
+      <div class="area reveal d2"><div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0FA877" stroke-width="1.8"></circle><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke="#0FA877" stroke-width="1.8"></path></svg></div><h4>Meio Ambiente</h4><p>Biorremediação, bioprospecção e monitoramento sustentável.</p></div>
+      <div class="area reveal"><div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="#0FA877" stroke-width="1.8"></rect><path d="M8 12h8M12 8v8" stroke="#0FA877" stroke-width="1.4"></path></svg></div><h4>Indústria &amp; Bioprocessos</h4><p>Enzimas, alimentos, biomateriais e biofármacos.</p></div>
+      <div class="area reveal d1"><div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" stroke="#0FA877" stroke-width="1.8" stroke-linejoin="round"></path></svg></div><h4>Bioenergia</h4><p>Biocombustíveis e bioenergia — etanol de 2ª geração.</p></div>
+      <div class="area reveal d2"><div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#0FA877" stroke-linecap="round"></path><circle cx="18" cy="17" r="2.4" stroke="#0FA877" stroke-width="1.6"></circle></svg></div><h4>Bioinformática &amp; Genômica</h4><p>Análise de DNA, genômica e dados biológicos.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="dark-sec">
+  <canvas class="biosoup" id="soup-firms"></canvas>
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="idx">07 · Mercado</span>
+      <h2>Empresas por sector</h2>
+      <p class="lead">Referências brasileiras por área de atuação.</p>
+    </div>
+    <div class="sectors">
+      <div class="sector reveal"><h4>Saúde &amp; Farmacêutica</h4><div class="sdesc">Biofármacos, vacinas, diagnóstico</div><div class="firms">Eurofarma · EMS Pharma · Aché · Biomm · Hemobrás</div></div>
+      <div class="sector reveal d1"><h4>Agronegócio</h4><div class="sdesc">Controle biológico, OGMs</div><div class="firms">Bug Agentes Biológicos · CanaVialis · GranBio</div></div>
+      <div class="sector reveal d2"><h4>Ambiental &amp; Industrial</h4><div class="sdesc">Bioprocessos, biorremediação</div><div class="firms">GranBio · Triplet Biotecnologia</div></div>
+      <div class="sector reveal d3"><h4>Bioinformática &amp; Startups</h4><div class="sdesc">Dados biológicos, genômica</div><div class="firms">Tismoo · Biolinker · Labogen · Protos Biotech Jr.</div></div>
+    </div>
+    <div class="note reveal"><span class="flag">Panorama de mercado</span> &nbsp;Referências do setor no Brasil (SP, MG, RJ e RS) — <b>não necessariamente parceiras do CEFET-MG</b>. Confirme convênios com a Coordenação.</div>
+  </div>
+</section>
+</div>
+
+<!-- ============ PAINEL ============ -->
+<div class="page" id="page-painel">
+<section>
+  <canvas class="biosoup" id="m-painel"></canvas>
+  <div class="wrap">
+    <div class="head compact reveal">
+      <span class="idx">Painel do estudante</span>
+    </div>
+    
+    <div class="subnav-wrap reveal d1">
+      <div class="subnav" id="subnav">
+        <button class="on" data-block="visao">Visão geral</button>
+        <button data-block="notas">Notas &amp; Faltas</button>
+        <button data-block="horarios">Horários &amp; Agenda</button>
+        <button data-block="prereqs">Pré-requisitos</button>
+        <button data-block="complementares">Complementares</button>
+      </div>
+      <div class="period-picker" id="period-picker">
+        <button class="period-btn" id="period-btn" aria-haspopup="listbox" aria-expanded="false">
+          <span id="period-btn-label">1º período</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <div class="period-menu" id="period-menu" role="listbox"></div>
+      </div>
+    </div>
+
+    <div class="panel-block on" id="block-visao">
+      <div class="note reveal" style="margin-top:0;margin-bottom:var(--s4)">Resumo do seu percurso — CRA, integralização, grade da semana, próximos eventos e o que precisa de atenção. <span class="flag">Atualiza sozinho conforme você usa o painel</span></div>
+      <div id="visao-wrap"></div>
+      <div class="notas-dashboard-grid reveal" style="margin-top:var(--s3)">
+        <div class="sim-chart" id="sim-chart-wrap">
+          <div class="sim-cra" id="sim-cra-big"></div>
+          <div class="cra-collapse" id="cra-collapse">
+            <button class="cra-toggle" id="cra-toggle" aria-expanded="false">
+              <span>Ver evolução do CRA</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+            </button>
+            <div class="cra-collapse-body">
+              <svg id="cra-chart" viewBox="0 0 520 160" aria-hidden="true"></svg>
+            </div>
+          </div>
+          <div class="summary" id="grade-summary"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="panel-block" id="block-notas">
+      <div class="note reveal" style="margin-top:0;margin-bottom:var(--s4)">Notas e faltas por disciplina. Clique num card para expandir e lançar avaliações. <span class="flag">O CRA e os indicadores ficam na Visão Geral</span></div>
+      <div id="grade-list" class="reveal"></div>
+      <div class="addopt reveal" id="addopt-zone">
+        <span style="font-size:13px;color:var(--ink-soft);font-weight:600">Adicionar optativa:</span>
+        <select id="opt-select"></select>
+        <button class="add" id="opt-add">Adicionar</button>
+      </div>
+    </div>
+
+<!-- ABA DE HORÁRIOS & AGENDA COM DROPDOWNS INTEGRADOS -->
+    <div class="panel-block" id="block-horarios">
+      <div class="note reveal" style="margin-top:0;margin-bottom:var(--s3)">
+        Consulte a grade semanal de aulas. Salas editáveis. <span class="campus-tag campus-ns">NS</span> Nova Suíça · <span class="campus-tag campus-ng">NG</span> Nova Gameleira.
+      </div>
+      
+      <!-- CONTROLES COM DROPDOWNS COMPACTOS -->
+      <div class="sched-controls-bar reveal" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: var(--s3); background: var(--bg-soft); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 12px 20px; flex-wrap: wrap;">
+        
+        <!-- Dropdown Seleção de Período -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <label for="sched-period-select" style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--ink-soft); letter-spacing: .05em;">Período do Horário:</label>
+          <select id="sched-period-select" class="sched-select-dropdown">
+            <option value="1">1º período</option>
+            <option value="2">2º período</option>
+          </select>
+        </div>
+
+        <!-- Dropdown Seleção de Turma Prática (T1 / T2) -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <label for="sched-turma-select" style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--ink-soft); letter-spacing: .05em;">Filtro de Turma Prática:</label>
+          <select id="sched-turma-select" class="sched-select-dropdown">
+            <option value="ALL">Todas as Turmas</option>
+            <option value="T1">Turma T1 (Prática)</option>
+            <option value="T2">Turma T2 (Prática)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Tabela Renderizada do Quadro de Horários -->
+      <div style="overflow-x:auto" class="reveal" id="sched-horarios"></div>
+      
+      <div class="head compact reveal" style="margin-top:var(--s5);margin-bottom:var(--s3)">
+        <span class="idx">Agenda</span>
+        <p class="lead">Provas, entregas e eventos, ordenados por data.</p>
+      </div>
+      <div id="agenda-wrap"></div>
+    </div>
+    <div class="panel-block" id="block-prereqs">
+      <div class="note reveal" style="margin-top:0;margin-bottom:var(--s4)">Clique numa disciplina: o grafo destaca seus pré-requisitos (raízes) e o que ela destrava (ramos). <span class="flag">Encadeamento conforme o PPC</span></div>
+      <div class="graph-wrap reveal">
+        <div class="graph-canvas" id="graph-canvas"><svg class="gsvg" id="graph-svg"></svg></div>
+        <div class="graph-side">
+          <h4 id="gside-title">Selecione uma disciplina</h4>
+          <div class="ginfo" id="gside-info">Clique em um nó para iluminar raízes e ramos.</div>
+          <div class="glist" id="gside-list"></div>
+          <div class="glegend">
+            <span><i style="background:var(--petrol)"></i> selecionada</span>
+            <span><i style="background:var(--lime)"></i> destrava</span>
+            <span><i style="background:rgba(127,224,188,.6)"></i> pré-requisito</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="head compact reveal" style="margin-top:var(--s5);margin-bottom:var(--s3)">
+        <span class="idx">Planejador</span>
+        <p class="lead">Arraste optativas para os períodos; pré-requisito faltante fica em vermelho — os dados vêm do mesmo grafo acima.</p>
+      </div>
+      <div class="planner reveal">
+        <div class="plan-pool" id="plan-pool"><h4>Optativas</h4><div class="ph">Arraste para um período →</div><div id="pool-items"></div></div>
+        <div class="plan-grid" id="plan-grid"></div>
+      </div>
+    </div>
+
+    <div class="panel-block" id="block-complementares">
+      <div class="note reveal" style="margin-top:0;margin-bottom:var(--s4)">Registre atividades complementares com suas horas e a meta do PPC. <span class="flag">Confirmar carga mínima</span></div>
+      <div id="comp-wrap"></div>
+    </div>
+    <div class="integr reveal" id="integr" style="margin-top:var(--s4);margin-bottom:0"></div>
+  </div>
+</section>
+</div>
+
+<!-- ============ CALENDÁRIO ============ -->
+<div class="page" id="page-calendario">
+<section>
+  <canvas class="biosoup" id="m-cal"></canvas>
+  <div class="wrap">
+    <div class="head compact reveal">
+      <span class="idx">Calendário Escolar 2026.2</span>
+      <h2>Calendário Escolar e Temático</h2>
+      <p class="lead">Calendário homologado pela Deliberação CGRAD nº 25 de 13/07/2026 para Belo Horizonte. Integração com sua agenda local.</p>
+    </div>
+    <div class="calendar-layout reveal">
+      <div class="calendar-container">
+        <div class="calendar-controls">
+          <div class="calendar-nav">
+            <button id="cal-prev">◀ Anterior</button>
+            <button id="cal-next">Próximo ▶</button>
+          </div>
+          <div class="calendar-month-title" id="cal-month-title">Agosto 2026</div>
+          <div class="calendar-stats-box" id="cal-stats-box">Dias letivos no mês: <b>--</b></div>
+        </div>
+        <div class="calendar-grid" id="calendar-days-grid"></div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============ ESTRUTURA CURRICULAR OBRIGATÓRIA (KANBAN) ============ -->
+<div class="page" id="page-grade">
+<section>
+  <canvas class="biosoup" id="m-grade-canvas"></canvas>
+  <div class="wrap">
+    <div class="head compact reveal">
+      <span class="idx">Percurso Curricular Regular</span>
+      <h2>Grade Curricular Obrigatória</h2>
+      <p class="lead">Estrutura oficial do curso de Bacharelado em Biotecnologia do CEFET-MG organizada por períodos. Clique em qualquer matéria para detalhar os créditos, carga horária e ementa oficial.</p>
+    </div>
+
+    <!-- Legenda de Cores por Departamento Gestor -->
+    <div class="dept-legend reveal">
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--debio-color)"></div><span>DEBIO (Ciências Biológicas)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dequi-color)"></div><span>DEQUI (Química)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--decom-color)"></div><span>DECOM (Computação)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--df-color)"></div><span>DF (Física)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--deteq-color)"></div><span>DETEQ (Engenharia Química)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcsa-color)"></div><span>DCSA (Ciências Sociais Aplicadas)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcsf-color)"></div><span>DCSF (Ciências Sociais e Filosofia)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcta-color)"></div><span>DCTA (Ciência e Tecnologia Ambiental)</span></div>
+    </div>
+
+    <!-- Kanban Dinâmico de Grade Regular por Períodos (9 colunas) -->
+    <div class="kanban-board reveal" id="grade-kanban-board" style="grid-template-columns: repeat(9, 280px); overflow-x: auto; padding-bottom: 24px; gap: 24px;">
+      
+      <!-- 1º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">1º Período</div>
+        <div class="kanban-card decom-card" data-subj-id="bioe1">
+          <div class="kanban-card-title">Bioestatística I</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept decom">DECOM</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bcel">
+          <div class="kanban-card-title">Biologia Celular</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card dequi-card" data-subj-id="quim">
+          <div class="kanban-card-title">Química Geral</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dequi">DEQUI</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bfla">
+          <div class="kanban-card-title">Biossegurança e Fundamentos de Laboratório</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dequi-card" data-subj-id="lqui">
+          <div class="kanban-card-title">Laboratório de Química Geral</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcsf-card" data-subj-id="cspb">
+          <div class="kanban-card-title">Contexto Social e Profissional da Biotecnologia</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcsf-card" data-subj-id="fite">
+          <div class="kanban-card-title">Filosofia da Tecnologia</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcsf-card" data-subj-id="paor">
+          <div class="kanban-card-title">Psicologia Aplicada às Organizações</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+        </div>
+      </div>
+
+      <!-- 2º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">2º Período</div>
+        <div class="kanban-card decom-card" data-subj-id="bioe2">
+          <div class="kanban-card-title">Bioestatística II</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept decom">DECOM</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="hghu">
+          <div class="kanban-card-title">Histologia Geral Humana</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card dequi-card" data-subj-id="epco">
+          <div class="kanban-card-title">Estrutura e Propriedades dos Compostos Orgânicos</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dequi">DEQUI</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="srbi">
+          <div class="kanban-card-title">Segurança e Regulamentação em Biotecnologia</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcsf-card" data-subj-id="soci">
+          <div class="kanban-card-title">Introdução à Sociologia</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcsa-card" data-subj-id="mcie">
+          <div class="kanban-card-title">Metodologia Científica</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsa">DCSA</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="mger">
+          <div class="kanban-card-title">Microbiologia Geral</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+      </div>
+
+      <!-- 3º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">3º Período</div>
+        <div class="kanban-card dcsf-card" data-subj-id="bioe">
+          <div class="kanban-card-title">Bioética</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bioq">
+          <div class="kanban-card-title">Bioquímica Básica</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="gen">
+          <div class="kanban-card-title">Genética Básica e Citogenética</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="imic">
+          <div class="kanban-card-title">Instrumentação em Microbiologia</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="imb">
+          <div class="kanban-card-title">Imunologia Básica</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcsa-card" data-subj-id="mpes">
+          <div class="kanban-card-title">Metodologia da Pesquisa</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsa">DCSA</span><span>2 Créditos</span></div>
+        </div>
+      </div>
+
+      <!-- 4º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">4º Período</div>
+        <div class="kanban-card debio-card" data-subj-id="fghu">
+          <div class="kanban-card-title">Fisiologia Geral Humana</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card dequi-card" data-subj-id="qate">
+          <div class="kanban-card-title">Química Analítica Teórica</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dequi-card" data-subj-id="qapr">
+          <div class="kanban-card-title">Química Analítica Prática</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dequi">DEQUI</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="ima">
+          <div class="kanban-card-title">Imunologia Aplicada</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bap">
+          <div class="kanban-card-title">Bioquímica Aplicada</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="genap">
+          <div class="kanban-card-title">Genética Aplicada</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+      </div>
+
+      <!-- 5º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">5º Período</div>
+        <div class="kanban-card debio-card" data-subj-id="farm">
+          <div class="kanban-card-title">Fundamentos em Farmacologia</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card decom-card" data-subj-id="bioinf">
+          <div class="kanban-card-title">Introdução à Bioinformática</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept decom">DECOM</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="mveg">
+          <div class="kanban-card-title">Morfofisiologia Vegetal</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bmol">
+          <div class="kanban-card-title">Biologia Molecular Aplicada</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+      </div>
+
+      <!-- 6º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">6º Período</div>
+        <div class="kanban-card debio-card" data-subj-id="paras">
+          <div class="kanban-card-title">Parasitologia Aplicada</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bveg">
+          <div class="kanban-card-title">Biotecnologia Vegetal</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bani">
+          <div class="kanban-card-title">Biotecnologia Animal</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card df-card" data-subj-id="biof">
+          <div class="kanban-card-title">Biofísica</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept df">DF</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="enme">
+          <div class="kanban-card-title">Engenharia Metabólica</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+      </div>
+
+      <!-- 7º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">7º Período</div>
+        <div class="kanban-card debio-card" data-subj-id="nano">
+          <div class="kanban-card-title">Nanobiotecnologia</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="bhum">
+          <div class="kanban-card-title">Biotecnologia Humana</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcta-card" data-subj-id="etox">
+          <div class="kanban-card-title">Ecotoxicologia</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dcta">DCTA</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="tfbi">
+          <div class="kanban-card-title">Tecnologia de Fermentações e Bioprocessos</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+        </div>
+      </div>
+
+      <!-- 8º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">8º Período</div>
+        <div class="kanban-card debio-card" data-subj-id="gpge">
+          <div class="kanban-card-title">Genômica e Pós-Genômica</div>
+          <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+        </div>
+        <div class="kanban-card dcsa-card" data-subj-id="empr_reg">
+          <div class="kanban-card-title">Empreendedorismo - Modelo e Plano de Negócios</div>
+          <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dcsa">DCSA</span><span>4 Créditos</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="tcc1">
+          <div class="kanban-card-title">Atividade de TCC I</div>
+          <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept debio">DEBIO</span><span>1 Crédito</span></div>
+        </div>
+      </div>
+
+      <!-- 9º Período -->
+      <div class="kanban-col">
+        <div class="kanban-col-header">9º Período</div>
+        <div class="kanban-card dcsa-card" data-subj-id="estag_sup">
+          <div class="kanban-card-title">Atividade de Estágio Supervisionado</div>
+          <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept dcsa">DCSA</span><span>1 Crédito</span></div>
+        </div>
+        <div class="kanban-card debio-card" data-subj-id="tcc2">
+          <div class="kanban-card-title">Atividade de TCC II</div>
+          <div class="kanban-card-meta"><span>15 h/a</span><span class="tag-dept debio">DEBIO</span><span>1 Crédito</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============ OPTATIVAS (KANBAN) ============ -->
+<div class="page" id="page-optativas">
+<section>
+  <canvas class="biosoup" id="m-opt"></canvas>
+  <div class="wrap">
+    <div class="head compact reveal">
+      <span class="idx">Estrutura Curricular Flexível</span>
+      <h2>Disciplinas Optativas Oficiais</h2>
+      <p class="lead">Quadro Kanban de dependências acadêmicas do curso de Biotecnologia do CEFET-MG. Clique em um card para detalhar a ementa, créditos e pré-requisitos oficiais.</p>
+    </div>
+
+    <div class="dept-legend reveal">
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--debio-color)"></div><span>DEBIO (Ciências Biológicas)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dequi-color)"></div><span>DEQUI (Química)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--decom-color)"></div><span>DECOM (Computação)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--df-color)"></div><span>DF (Física)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--deteq-color)"></div><span>DETEQ (Engenharia Química)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcsa-color)"></div><span>DCSA (Ciências Sociais Aplicadas)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcsf-color)"></div><span>DCSF (Ciências Sociais e Filosofia)</span></div>
+      <div class="dept-legend-item"><div class="dept-legend-dot" style="background-color:var(--dcta-color)"></div><span>DCTA (Ciência e Tecnologia Ambiental)</span></div>
+    </div>
+
+    <div class="grid-sched-container">
+      <div class="kanban-board reveal" id="opt-kanban-board">
+        <div class="kanban-col">
+          <div class="kanban-col-header">Livre (0 Requisitos)</div>
+          <div class="kanban-card debio-card" data-opt-id="biom">
+            <div class="kanban-card-title">Biomimética</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsa-card" data-opt-id="empr">
+            <div class="kanban-card-title">Empreendedorismo para Org. Criativas</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept dcsa">DCSA</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-opt-id="ing1">
+            <div class="kanban-card-title">Inglês Instrumental I</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-opt-id="libr">
+            <div class="kanban-card-title">Libras I</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-opt-id="semi">
+            <div class="kanban-card-title">Fundamentos de Semiótica</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+        </div>
+
+        <div class="kanban-col">
+          <div class="kanban-col-header">1 Pré-requisito</div>
+          <div class="kanban-card deteq-card" data-opt-id="bta">
+            <div class="kanban-card-title">Biotecnologia Aplicada à Microbiologia</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept deteq">DETEQ</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card dcsf-card" data-opt-id="ing2">
+            <div class="kanban-card-title">Inglês Instrumental II</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept dcsf">DCSF</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-opt-id="iph">
+            <div class="kanban-card-title">Interação Patógeno-Hospedeiro</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+        </div>
+
+        <div class="kanban-col">
+          <div class="kanban-col-header">2 Pré-requisitos</div>
+          <div class="kanban-card debio-card" data-opt-id="btef">
+            <div class="kanban-card-title">Biotelemetria</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept debio">DEBIO</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-opt-id="btm">
+            <div class="kanban-card-title">Biotecnologia Médica</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card deteq-card" data-opt-id="btf">
+            <div class="kanban-card-title">Biotecnologia Farmacêutica</div>
+            <div class="kanban-card-meta"><span>60 h/a</span><span class="tag-dept deteq">DETEQ</span><span>4 Créditos</span></div>
+          </div>
+          <div class="kanban-card deteq-card" data-opt-id="tdv">
+            <div class="kanban-card-title">Tecnologia de Desenv. de Vacinas</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept deteq">DETEQ</span><span>2 Créditos</span></div>
+          </div>
+          <div class="kanban-card debio-card" data-opt-id="prot">
+            <div class="kanban-card-title">Proteínas Recombinantes</div>
+            <div class="kanban-card-meta"><span>30 h/a</span><span class="tag-dept debio">DEBIO</span><span>2 Créditos</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============ MODAL DE EVENTO / EMENTA ============ -->
+<div class="cal-modal-overlay" id="cal-event-modal-overlay">
+  <div class="cal-modal">
+    <div class="cal-modal-header" id="cal-modal-header-bg" style="background: var(--cal-ensino);">
+      <button class="cal-modal-close" id="cal-modal-close-btn" aria-label="Fechar modal">✕</button>
+      <span class="cal-modal-tag" id="cal-modal-category">Categoria</span>
+      <h3 id="cal-modal-title">Título do Evento</h3>
+    </div>
+    <div class="cal-modal-body">
+      <div class="cal-modal-info-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <div class="cal-modal-info-content">
+          <b id="cal-modal-date-str">Quarta-feira, 5 de agosto</b>
+        </div>
+      </div>
+      <div class="cal-modal-info-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+        <div class="cal-modal-info-content">
+          <b>Origem</b>
+          <p id="cal-modal-origin">Oficial - Deliberação CGRAD 25/2026</p>
+        </div>
+      </div>
+      <div class="cal-modal-info-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        <div class="cal-modal-info-content">
+          <b>Detalhes / Descrição</b>
+          <p id="cal-modal-desc">Sem descrição disponível para este evento.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="btnsave" id="btnsave">Dados salvos ✓</button>
+<input type="file" id="import-file" accept="application/json" style="display:none">
+<div class="tools" id="tools">
+  <div class="tools-menu" id="tools-menu">
+    <button id="fab-backup" title="Exportar backup" aria-label="Exportar backup"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 10l5 5 5-5M5 21h14" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+    <button id="fab-import" title="Importar backup" aria-label="Importar backup"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V3M7 8l5-5 5 5M5 21h14" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+    <button id="fab-print" title="Imprimir / PDF" aria-label="Imprimir"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V3h12v6M6 18H4v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7h-2M6 14h12v7H6z" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+    <button id="fab-clear" title="Limpar dados" aria-label="Limpar dados"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+  </div>
+  <button class="tools-toggle" id="tools-toggle" title="Ferramentas" aria-label="Ferramentas"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></button>
+</div>
+
+<!-- MODAL DE TUTORIAL INTERATIVO (ONBOARDING) -->
+<div class="onboarding-overlay" id="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+  <div class="onboarding-modal">
+    <!-- Cabeçalho do Modal -->
+    <div class="onboarding-header">
+      <span class="onboarding-step-counter" id="onboarding-step-counter">Etapa 1 de 8</span>
+      <button class="onboarding-close-btn" id="onboarding-close-btn" aria-label="Fechar tutorial">✕</button>
+    </div>
+
+    <!-- Conteúdo dos Slides -->
+    <div class="onboarding-body">
+      <!-- SLIDE 1: Boas-vindas (Centralizado Clean com Tag abaixo do texto) -->
+      <div class="onboarding-slide active" data-slide="1">
+        <div class="onboarding-welcome-clean">
+          <h3 class="onboarding-title" id="onboarding-title">Bem-vindo ao BioPulse</h3>
+          <p class="onboarding-desc-center">Sua plataforma central para gerenciar toda a sua trajetória acadêmica. Acompanhe notas, simule CRA, consulte pré-requisitos, planeje semestres e sincronize sua agenda em uma interface leve e intuitiva.</p>
+          <span class="onboarding-badge-clean">Biotecnologia CEFET-MG</span>
+        </div>
+      </div>
+
+      <!-- SLIDE 2: Visão Geral -->
+      <div class="onboarding-slide" data-slide="2">
+        <h3 class="onboarding-title">Visão Geral & Indicadores</h3>
+        <p class="onboarding-desc">Tenha uma visão consolidada do seu CRA real, porcentagem de integralização das 3.300h do curso, horas complementares acumuladas e alertas de matérias em risco de faltas.</p>
+        <div class="onboarding-demo-box">
+          <div class="demo-kpi-grid">
+            <div class="demo-kpi-card"><div class="kv">78.5</div><div class="kl">CRA Real</div></div>
+            <div class="demo-kpi-card"><div class="kv">42%</div><div class="kl">Integralização</div></div>
+            <div class="demo-kpi-card"><div class="kv">60h</div><div class="kl">Complementares</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3: Notas & Faltas -->
+      <div class="onboarding-slide" data-slide="3">
+        <h3 class="onboarding-title">Acompanhe Notas, Faltas e CRA</h3>
+        <p class="onboarding-desc">Cadastre suas avaliações para calcular sua média no período automaticamente. Monitore também o limite de faltas e veja o progresso de integralização.</p>
+        <div class="onboarding-demo-box">
+          <div class="demo-subj-card">
+            <div class="demo-subj-header">
+              <div>
+                <strong>Biologia Celular</strong>
+                <span class="demo-subj-code">G00BCEL0.01</span>
+              </div>
+              <span class="badge ok" id="demo-badge-status">Aprovado</span>
+            </div>
+            <div class="demo-subj-bars">
+              <div class="demo-bar-wrap">
+                <span>Nota: <b id="demo-grade-val">75.0 pts</b></span>
+                <div class="demo-bar-track"><div class="demo-bar-fill grade" style="width: 75%;"></div></div>
+              </div>
+              <div class="demo-bar-wrap">
+                <span>Faltas: <b id="demo-faltas-val">2 fls</b></span>
+                <div class="demo-bar-track"><div class="demo-bar-fill faltas" id="demo-faltas-fill" style="width: 33%;"></div></div>
+              </div>
+            </div>
+            <div class="demo-controls-row">
+              <span>Simular Faltas:</span>
+              <button class="demo-step-btn" id="demo-falta-minus">-</button>
+              <button class="demo-step-btn" id="demo-falta-plus">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Horários & Salas -->
+      <div class="onboarding-slide" data-slide="4">
+        <h3 class="onboarding-title">Horários de Aula & Alocação de Salas</h3>
+        <p class="onboarding-desc">Acesse a grade semanal de aulas e personalize o número das salas de cada disciplina. Alterne facilmente entre o Campus Nova Suíça (NS) e Nova Gameleira (NG).</p>
+        <div class="onboarding-demo-box">
+          <div class="demo-sched-row">
+            <div>
+              <span class="campus-tag campus-ns">NS</span>
+              <strong>G00QUIM1.01</strong>
+              <small>Química Teórica (19:00 - 20:40)</small>
+            </div>
+            <span class="demo-room-badge">Sala 422</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: Pré-requisitos & Planejador Arrastável -->
+      <div class="onboarding-slide" data-slide="5">
+        <h3 class="onboarding-title">Conexões entre Disciplinas & Planejador</h3>
+        <p class="onboarding-desc">Clique em qualquer matéria no mapa para iluminar seus pré-requisitos e as disciplinas que ela destrava. Monte sua grade arrastando optativas no planejador.</p>
+        <div class="onboarding-demo-box">
+          <div class="demo-graph-canvas">
+            <button class="demo-node" id="demo-node-1">
+              Bioquímica Básica
+              <small>3º Período</small>
+            </button>
+            <div class="demo-edge-line" id="demo-edge-line"></div>
+            <button class="demo-node" id="demo-node-2">
+              Bioquímica Aplicada
+              <small>4º Período</small>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 6: Atividades Complementares -->
+      <div class="onboarding-slide" data-slide="6">
+        <h3 class="onboarding-title">Atividades Complementares</h3>
+        <p class="onboarding-desc">Cadastre cursos, eventos, iniciação científica e monitorias. Defina sua meta e acompanhe o preenchimento da carga horária extracurricular exigida pelo PPC.</p>
+        <div class="onboarding-demo-box">
+          <div class="demo-comp-box">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>Horas Cadastradas</span>
+              <span>60 / 120 h</span>
+            </div>
+            <div class="demo-bar-track"><div class="demo-bar-fill grade" style="width: 50%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 7: Calendário Acadêmico Integrado -->
+      <div class="onboarding-slide" data-slide="7">
+        <h3 class="onboarding-title">Calendário Acadêmico & Agenda Integrada</h3>
+        <p class="onboarding-desc">Acompanhe prazos e datas oficiais da Deliberação CGRAD. Clique abaixo em um evento de demonstração para testar o modal descritivo completo do sistema:</p>
+        <div class="onboarding-demo-box">
+          <div class="demo-cal-week">
+            <div class="demo-cal-day">
+              <span class="demo-cal-num">05 AGO</span>
+              <span class="demo-cal-event ofic" id="demo-cal-trigger">Início do Semestre Letivo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 8: Optativas Kanban & Conclusão -->
+      <div class="onboarding-slide" data-slide="8">
+        <h3 class="onboarding-title">Quadro Kanban de Optativas & Conclusão</h3>
+        <p class="onboarding-desc">Consulte as optativas agrupadas por requisitos e departamento gestor. Seus dados são salvos automaticamente no seu navegador. Você pode reabrir este guia no menu flutuante a qualquer momento!</p>
+        <div class="onboarding-demo-box">
+          <div class="demo-fab-preview">
+            <div class="demo-fab-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+            </div>
+            <span>Reabra o Tutorial no menu inferior direito</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodapé de Controles e Navegação -->
+    <div class="onboarding-footer" id="onboarding-footer">
+      <button class="onboarding-dismiss-btn" id="onboarding-dismiss-btn">Pular tutorial</button>
+      
+      <div class="onboarding-nav-controls">
+        <div class="onboarding-dots" id="onboarding-dots">
+          <span class="onboarding-dot active" data-dot="1"></span>
+          <span class="onboarding-dot" data-dot="2"></span>
+          <span class="onboarding-dot" data-dot="3"></span>
+          <span class="onboarding-dot" data-dot="4"></span>
+          <span class="onboarding-dot" data-dot="5"></span>
+          <span class="onboarding-dot" data-dot="6"></span>
+          <span class="onboarding-dot" data-dot="7"></span>
+          <span class="onboarding-dot" data-dot="8"></span>
+        </div>
+        
+        <div class="onboarding-action-btns">
+          <button class="onboarding-btn sec" id="onboarding-prev-btn" disabled>Anterior</button>
+          <button class="onboarding-btn pri" id="onboarding-next-btn">Próximo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FOOTER GERAL (SEMPRE VISÍVEL) ============ -->
+<!-- ============ FOOTER GERAL (COM BLINDAGEM JURÍDICA E CRÉDITOS) ============ -->
+<footer>
+  <canvas class="biosoup" id="soup-footer"></canvas>
+  <div class="wrap">
+    <div class="foot-top">
+      <span>BioPulse · Painel de Formação em Biotecnologia</span>
+      <span><b>Atenção:</b> Confirme sempre as ofertas, horários e critérios curriculares diretamente nos canais e sistemas acadêmicos oficiais do CEFET-MG.</span>
+    </div>
+
+    <!-- Termos de Isenção de Responsabilidade e Defesa Jurídica -->
+    <div class="foot-disclaimer" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(232,242,238,0.1); font-size: 11px; line-height: 1.6; color: rgba(232,242,238,0.45); text-align: justify;">
+      <p style="margin-bottom: 8px;"><b>ISENÇÃO DE RESPONSABILIDADE E NOTA LEGAL (DISCLAIMER):</b> Este software/aplicativo ("BioPulse") é uma ferramenta de caráter estritamente educativo, de código aberto e sem fins lucrativos, desenvolvida de forma independente para fins de suporte acadêmico e planejamento curricular dos estudantes. Esta aplicação <b>NÃO possui qualquer vínculo oficial, patrocínio, autorização ou representação legal</b> com o Centro Federal de Educação Tecnológica de Minas Gerais (CEFET-MG), seus departamentos ou órgãos colegiados.</p>
+      <p style="margin-bottom: 8px;">Todas as informações curriculares, códigos de disciplinas, matrizes pedagógicas e calendários escolares exibidos nesta plataforma são de natureza pública, de livre acesso ao cidadão e extraídos diretamente de resoluções e documentos disponibilizados publicamente pela própria instituição de ensino nos termos da Lei de Acesso à Informação (Lei nº 12.527/2011). Os dados acadêmicos do usuário são armazenados de forma local e privada no próprio dispositivo (via localStorage), não havendo coleta, transmissão ou processamento externo de dados cadastrais ou sigilosos.</p>
+      <p><b>DIREITOS AUTORAIS E PROPRIEDADE INTELECTUAL:</b> O uso de marcas, siglas, nomes de departamentos ou referências curriculares atrelados ao CEFET-MG possui caráter meramente identificativo e descritivo (uso legítimo / fair use), amparado pelo Artigo 46 da Lei de Direitos Autorais (Lei nº 9.610/1998), não configurando concorrência desleal, publicidade enganosa ou intenção de violação de marca. Qualquer eventual inconformidade ou infração de propriedade intelectual que porventura seja identificada <b>não é intencional</b>. Solicitamos que qualquer manifestação ou pedido de adequação, ajuste ou remoção amigável de conteúdo seja encaminhado de forma extrajudicial e direta ao desenvolvedor através de seus canais de contato disponibilizados abaixo, comprometendo-se este à pronta resolução de boa-fé.</p>
+    </div>
+
+    <div class="foot-credits" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(232,242,238,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <span class="foot-by" style="font-size: 13px; color: rgba(232,242,238,0.75);">Desenvolvido por <b style="color: #fff; font-weight: 700;">João Gabriel Sousa de Paula</b></span>
+      <div class="foot-social" style="display: flex; align-items: center; gap: 14px;">
+        <a href="https://www.linkedin.com/in/joão-gabriel-sousa-0468032b4" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.8 0 0 .78 0 1.75v20.5C0 23.2.8 24 1.77 24h20.45c.98 0 1.78-.8 1.78-1.75V1.75C24 .78 23.2 0 22.22 0z"/></svg>
+        </a>
+        <a href="https://github.com/IndianaJooJ" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.93.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/jao.uau/" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ SCRIPTS — ORDEM OBRIGATÓRIA: data -> particles -> app ============ -->
+<script src="data.js"></script>
+<script src="particles.js"></script>
+<script src="app.js"></script>
+
+</body></html>
