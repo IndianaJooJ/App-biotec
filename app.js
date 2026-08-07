@@ -2,23 +2,25 @@
    APP.JS — Lógica do BioPulse (Painel de Formação em Biotecnologia)
    
    ÍNDICE E ESTRUTURA DO ARQUIVO:
-   01. PONTES COM MÓDULOS EXTERNOS & STORE (Linha 18)
-   02. VERSIONAMENTO E MIGRAÇÃO DE DADOS LOCAIS (Linha 35)
-   03. TEMA CLARO / ESCURO & BOTÃO FERRAMENTAS (Linha 55)
-   04. EFEITOS VISUAIS (Glow, Barra de Progresso, Reveal) (Linha 75)
-   05. CANVAS DE PARTÍCULAS DE FUNDO & NAVEGAÇÃO (Linha 90)
-   06. GRAFO DE PRÉ-REQUISITOS (Lógica de Seleção) (Linha 110)
-   07. HELPERS DE CURRÍCULO E CÁLCULO DE AVALIAÇÕES (Linha 150)
-   08. SELETOR DE PERÍODO & MENU DROPDOWN DO PAINEL (Linha 170)
-   09. SIMULADOR DO CRA & VISUALIZAÇÃO COLAPSÁVEL (Linha 205)
-   10. ACOMPANHAMENTO DE NOTAS, FALTAS E CARDS (Linha 225)
-   11. QUADRO DE HORÁRIOS, SALAS E FILTRO T1/T2 (Linha 310)
-   12. PAINEL VISÃO GERAL INTEGRADO E DINÂMICO (Linha 420)
-   13. AGENDA DE EVENTOS & HORAS COMPLEMENTARES (Linha 520)
-   14. PLANEJADOR DE OPTATIVAS (Drag and Drop) (Linha 570)
-   15. CALENDÁRIO ACADÊMICO E EMENTAS KANBAN (Linha 610)
-   16. TUTORIAL INTERATIVO / ONBOARDING (Linha 680)
-   17. INICIALIZAÇÃO DO SISTEMA (INIT) (Linha 780)
+   01. PONTES COM MÓDULOS EXTERNOS & STORE
+   02. VERSIONAMENTO E MIGRAÇÃO DE DADOS LOCAIS
+   03. TEMA CLARO / ESCURO & BOTÃO FERRAMENTAS
+   04. EFEITOS VISUAIS (Glow, Barra de Progresso, Reveal)
+   05. CANVAS DE PARTÍCULAS DE FUNDO & NAVEGAÇÃO
+   06. GRAFO DE PRÉ-REQUISITOS (Lógica de Seleção)
+   07. HELPERS DE CURRÍCULO E VALIDAÇÕES ACADÊMICAS
+   08. CÁLCULO DE CRA REAL, HORAS INTEGRALIZADAS E GRÁFICO SVG
+   09. SELETOR DE PERÍODO & MENU DROPDOWN DO PAINEL
+   10. ACOMPANHAMENTO DE NOTAS, FALTAS E CARDS (COM ÍCONE DE LIXEIRA)
+   11. ADIÇÃO E CUSTOMIZAÇÃO DA GRADE (DEPARTAMENTOS CORRETOS)
+   12. QUADRO DE HORÁRIOS, SALAS E FILTRO T1/T2
+   13. PAINEL VISÃO GERAL INTEGRADO E DINÂMICO
+   14. AGENDA DE EVENTOS & HORAS COMPLEMENTARES
+   15. PLANEJADOR DE OPTATIVAS (Drag and Drop)
+   16. CALENDÁRIO ACADÊMICO E EMENTAS KANBAN
+   17. SUB-ABAS DA GRADE OBRIGATÓRIA / OPTATIVAS
+   18. TUTORIAL INTERATIVO / ONBOARDING
+   19. INICIALIZAÇÃO DO SISTEMA (INIT)
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -94,11 +96,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-/* Inicializa as partículas de fundo dos canvas das novas abas */
-  P.init(document.getElementById('m-grade-canvas'), { mode: 'mol' });
-  P.init(document.getElementById('m-avisos-canvas'), { mode: 'soup' });
-  P.init(document.getElementById('m-blog-canvas'), { mode: 'mol' }); // CANVAS DO BLOG
-
   var tools = document.getElementById('tools');
   var toolsToggle = document.getElementById('tools-toggle');
   if (toolsToggle) {
@@ -149,6 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
   ['m-hist', 'm-cefet', 'm-struct', 'm-areas', 'm-infos', 'm-trilha', 'm-opt', 'm-painel'].forEach(function (id) { P.init(document.getElementById(id), { mode: 'mol' }); });
   P.init(document.getElementById('m-grade-canvas'), { mode: 'mol' });
   P.init(document.getElementById('m-avisos-canvas'), { mode: 'soup' });
+  P.init(document.getElementById('m-blog-canvas'), { mode: 'mol' });
   P.buildDNA();
 
   var links = document.querySelectorAll('nav button.lnk'), pages = document.querySelectorAll('.page');
@@ -278,9 +276,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('gside-list').innerHTML = html;
   }
 
-  /* ===== 07. HELPERS DE CURRÍCULO ===== */
+  /* ===== 07. HELPERS DE CURRÍCULO E VALIDAÇÕES ACADÊMICAS ===== */
   var faltas = store.get('bp_faltas', {}), rooms = store.get('bp_rooms', {});
   var addedOpt = store.get('bp_opt', {}); if (Array.isArray(addedOpt)) { addedOpt = { '1': addedOpt }; store.set('bp_opt', addedOpt); }
+  var removedSubjs = store.get('bp_removed', {}); // Armazena matérias excluídas manualmente por semestre
   var notes = store.get('bp_notes', {});
   var evals = store.get('bp_evals', {});
   var curPeriod = store.get('bp_curperiod', 1);
@@ -293,21 +292,63 @@ document.addEventListener('DOMContentLoaded', function () {
   function chFromName(n) { var m = n.match(/(\d+)\s*h\/a/); return m ? parseInt(m[1], 10) : 30; }
   function editableSem(sem) { return parseInt(sem, 10) <= curPeriod; }
 
-  function listFor(sem) {
-    var arr;
-    if (sem === '1') arr = SEM1.map(function (o) { return { cod: o.cod, nome: o.nome, ch: o.ch, dept: o.dept }; });
-    else arr = (SEMS[sem] || []).map(function (a) { return { cod: a[2] || '', nome: a[0], ch: a[1], dept: a[3] || '' }; });
-    (addedOpt[sem] || []).forEach(function (name) {
-      var optId = name.toLowerCase().substring(0, 4);
-      var oData = OPT_CATALOGUE[optId] || {};
-      arr.push({ cod: 'OPT', nome: name, ch: chFromName(name), opt: true, dept: oData.dept ? oData.dept.toLowerCase() : 'deteq' });
-    });
-    return arr;
+  // Procura departamento por nome de matéria em todo o catálogo oficial
+  function findDeptForSubject(nome) {
+    if (!nome) return 'deteq';
+    // Limpa sufixos de CH se houver
+    var cleanName = nome.replace(/\s*\(\d+\s*h\/a\)/i, '').trim();
+
+    for (var i = 0; i < SEM1.length; i++) {
+      if (SEM1[i].nome.toLowerCase() === cleanName.toLowerCase()) return SEM1[i].dept || 'debio';
+    }
+    var keys = Object.keys(SEMS);
+    for (var k = 0; k < keys.length; k++) {
+      var arr = SEMS[keys[k]] || [];
+      for (var j = 0; j < arr.length; j++) {
+        if (arr[j][0].toLowerCase() === cleanName.toLowerCase()) return arr[j][3] || 'debio';
+      }
+    }
+    var optKeys = Object.keys(OPT_CATALOGUE);
+    for (var o = 0; k < optKeys.length; o++) {
+      var opt = OPT_CATALOGUE[optKeys[o]];
+      if (opt && opt.title && opt.title.toLowerCase() === cleanName.toLowerCase()) {
+        return opt.dept ? opt.dept.toLowerCase() : 'debio';
+      }
+    }
+    return 'deteq';
   }
 
-  function keyOf(sem, it) { return sem + '|' + (it.cod && it.cod !== 'OPT' ? it.cod : it.nome); }
+  function listFor(sem) {
+    var rawList = [];
+    if (sem === '1') {
+      rawList = SEM1.map(function (o) { return { cod: o.cod, nome: o.nome, ch: o.ch, dept: o.dept }; });
+    } else {
+      rawList = (SEMS[sem] || []).map(function (a) { return { cod: a[2] || '', nome: a[0], ch: a[1], dept: a[3] || '' }; });
+    }
+
+    // Inclui matérias adicionadas customizadas/optativas
+    (addedOpt[sem] || []).forEach(function (name) {
+      var d = findDeptForSubject(name);
+      rawList.push({ 
+        cod: 'CUSTOM', 
+        nome: name, 
+        ch: chFromName(name), 
+        opt: true, 
+        dept: d 
+      });
+    });
+
+    // Exclui matérias removidas manualmente neste semestre
+    var removedInSem = removedSubjs[sem] || [];
+    return rawList.filter(function(it) {
+      return removedInSem.indexOf(it.nome) === -1;
+    });
+  }
+
+  function keyOf(sem, it) { return sem + '|' + (it.cod && it.cod !== 'CUSTOM' ? it.cod : it.nome); }
   function semTotalCH(sem) { return listFor(String(sem)).reduce(function (a, it) { return a + (it.ch || 0); }, 0); }
   function evalsFor(k) { return evals[k] || []; }
+  
   function notaFinal(k) {
     var arr = evalsFor(k).map(function (e) { return parseFloat(e.nota); }).filter(function (v) { return !isNaN(v); });
     if (!arr.length) return NaN;
@@ -315,10 +356,136 @@ document.addEventListener('DOMContentLoaded', function () {
     return Math.min(100, soma);
   }
 
-  var curSem = '1';
-  function buildSemTabs() { var el = document.getElementById('semtabs'); if (!el) return; }
+  /* REGRA DE APROVAÇÃO (NOTA >= 60 E FALTAS <= LIMITE) */
+  function isAprovado(sem, it) {
+    var k = keyOf(String(sem), it);
+    var n = notaFinal(k);
+    var f = faltas[k] || 0;
+    var mx = maxFaltas(it.ch);
+    return (!isNaN(n) && n >= 60 && f <= mx);
+  }
 
-  /* ===== 08. SELETOR DE PERÍODO & MENU DROPDOWN DO PAINEL ===== */
+  function isAprovadoEmSemestreAnterior(nomeMateria, semAtual) {
+    var targetSem = parseInt(semAtual, 10);
+    for (var s = 1; s < targetSem; s++) {
+      var listSem = listFor(String(s));
+      for (var i = 0; i < listSem.length; i++) {
+        var it = listSem[i];
+        if (it.nome === nomeMateria && isAprovado(s, it)) {
+          return s;
+        }
+      }
+    }
+    return false;
+  }
+
+  var curSem = '1';
+
+  /* ===== 08. CÁLCULO DE CRA REAL, HORAS INTEGRALIZADAS E GRÁFICO SVG ===== */
+  function doneHours() {
+    var total = 0;
+    for (var s = 1; s <= 9; s++) {
+      listFor(String(s)).forEach(function (it) {
+        if (isAprovado(s, it)) total += it.ch;
+      });
+    }
+    return total;
+  }
+
+  function realCRA() {
+    var sumP = 0, sumCH = 0;
+    for (var s = 1; s <= 9; s++) {
+      listFor(String(s)).forEach(function (it) {
+        var k = keyOf(String(s), it);
+        var n = notaFinal(k);
+        if (!isNaN(n)) {
+          sumP += n * it.ch;
+          sumCH += it.ch;
+        }
+      });
+    }
+    return sumCH > 0 ? (sumP / sumCH) : null;
+  }
+
+  function drawCra() {
+    var craEl = document.getElementById('sim-cra-big');
+    var chart = document.getElementById('cra-chart');
+    if (!craEl) return;
+
+    var craVal = realCRA();
+    if (craVal !== null) {
+      craEl.innerHTML = '<div class="scv">' + craVal.toFixed(1) + '</div><div class="scl">CRA Real Geral</div><div class="scs">Média ponderada acumulada por carga horária</div>';
+    } else {
+      craEl.innerHTML = '<div class="scv">—</div><div class="scl">CRA Real Geral</div><div class="scs">Lance notas na aba "Notas & Faltas" para calcular</div>';
+    }
+
+    if (!chart) return;
+
+    var pts = [];
+    for (var s = 1; s <= 9; s++) {
+      var sumP = 0, sumCH = 0;
+      listFor(String(s)).forEach(function (it) {
+        var k = keyOf(String(s), it);
+        var n = notaFinal(k);
+        if (!isNaN(n)) { sumP += n * it.ch; sumCH += it.ch; }
+      });
+      if (sumCH > 0) {
+        pts.push({ s: s, val: sumP / sumCH });
+      }
+    }
+
+    if (pts.length < 1) {
+      chart.innerHTML = '<text x="260" y="105" text-anchor="middle" fill="rgba(232,242,238,.4)" font-size="13">Sem notas suficientes para gráfico de evolução</text>';
+      return;
+    }
+
+    var w = 520, h = 180, padL = 40, padR = 20, padT = 30, padB = 30;
+    var innerW = w - padL - padR, innerH = h - padT - padB;
+
+    var svg = '';
+    svg += '<line x1="' + padL + '" y1="' + (h - padB) + '" x2="' + (w - padR) + '" y2="' + (h - padB) + '" stroke="rgba(127,224,188,.2)" stroke-width="1"/>';
+    svg += '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (h - padB) + '" stroke="rgba(127,224,188,.2)" stroke-width="1"/>';
+
+    // Linha de meta 60.0 e 75.0
+    var y60 = h - padB - (60 / 100) * innerH;
+    var y75 = h - padB - (75 / 100) * innerH;
+    svg += '<line x1="' + padL + '" y1="' + y60 + '" x2="' + (w - padR) + '" y2="' + y60 + '" stroke="rgba(231,76,60,.3)" stroke-width="1" stroke-dasharray="3 3"/>';
+    svg += '<line x1="' + padL + '" y1="' + y75 + '" x2="' + (w - padR) + '" y2="' + y75 + '" stroke="rgba(194,238,115,.3)" stroke-width="1" stroke-dasharray="3 3"/>';
+
+    var pathD = '';
+    pts.forEach(function (pt, i) {
+      var x = padL + ((pt.s - 1) / 8) * innerW;
+      var y = h - padB - (pt.val / 100) * innerH;
+      if (i === 0) pathD += 'M' + x + ' ' + y;
+      else pathD += ' L' + x + ' ' + y;
+
+      svg += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="#C2EE73" stroke="#0C302B" stroke-width="2"/>';
+      svg += '<text x="' + x + '" y="' + (y - 8) + '" text-anchor="middle" fill="#C2EE73" font-size="10" font-weight="bold">' + pt.val.toFixed(1) + '</text>';
+      svg += '<text x="' + x + '" y="' + (h - 10) + '" text-anchor="middle" fill="rgba(232,242,238,.6)" font-size="10">' + pt.s + 'ºP</text>';
+    });
+
+    if (pts.length > 1) {
+      svg += '<path d="' + pathD + '" fill="none" stroke="#0FA877" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+
+    chart.innerHTML = svg;
+  }
+
+  function renderIntegr() {
+    var el = document.getElementById('integr');
+    if (!el) return;
+
+    var done = doneHours();
+    var pct = Math.min(100, (done / TOTAL_HA) * 100);
+
+    el.innerHTML = ''
+      + '<div class="itop"><h4>Progresso de Integralização do Curso</h4><div class="icount">' + done + ' / ' + TOTAL_HA + ' h/a</div></div>'
+      + '<div class="isub">Progresso geral considerando aprovação em matérias obrigatórias e optativas.</div>'
+      + '<div class="ibar"><div class="ifill" style="width:' + pct.toFixed(1) + '%"></div></div>'
+      + '<div class="imeta"><span>Concluído: <b>' + pct.toFixed(1) + '%</b></span><span>Restantes: <b>' + Math.max(0, TOTAL_HA - done) + ' h/a</b></span></div>';
+  }
+
+  /* ===== 09. SELETOR DE PERÍODO & MENU DROPDOWN DO PAINEL ===== */
   var periodPicker = document.getElementById('period-picker');
   var periodBtn = document.getElementById('period-btn');
   var periodMenu = document.getElementById('period-menu');
@@ -366,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* ===== 09. SIMULADOR DO CRA & VISUALIZAÇÃO COLAPSÁVEL ===== */
+  /* SIMULADOR DO CRA & VISUALIZAÇÃO COLAPSÁVEL */
   (function () {
     var col = document.getElementById('cra-collapse');
     var tog = document.getElementById('cra-toggle');
@@ -394,7 +561,17 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function currentList() { var ed = editableSem(curSem); return listFor(curSem).map(function (it) { it.locked = !ed; return it; }); }
-  function statusOf(n, f, mx) { if (f > mx) return ['Reprovado por falta', 'bad']; if (isNaN(n)) return ['Sem nota', 'neutral']; if (n >= 60) return ['Aprovado', 'ok']; if (n >= 40) return ['Em risco', 'warn']; return ['Insuficiente', 'bad']; }
+  
+  function statusOf(n, f, mx) { 
+    if (f > mx) return ['Reprovado por falta', 'bad']; 
+    if (isNaN(n)) return ['Sem nota', 'neutral']; 
+    if (n >= 60) return ['Aprovado', 'ok']; 
+    if (n >= 40) return ['Em risco', 'warn']; 
+    return ['Insuficiente', 'bad']; 
+  }
+
+  // Ícone SVG de lixeira reutilizável
+  var TRASH_ICON = '<svg class="rm-opt-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
 
   function renderNotas() {
     var list = currentList(), html = '', aprov = 0, somaN = 0, cntN = 0;
@@ -402,14 +579,21 @@ document.addEventListener('DOMContentLoaded', function () {
       var k = keyOf(curSem, it), f = faltas[k] || 0, mx = maxFaltas(it.ch), n = notaFinal(k);
       var st = statusOf(n, f, mx), pct = isNaN(n) ? 0 : Math.min(100, Math.round(n / 100 * 100));
       var pctFaltas = mx > 0 ? Math.min(100, Math.round(f / mx * 100)) : 0;
-      if (!isNaN(n)) { somaN += n; cntN++; if (n >= 60 && f <= mx) aprov++; }
+      
+      if (!isNaN(n)) { 
+        somaN += n; 
+        cntN++; 
+        if (isAprovado(curSem, it)) aprov++; 
+      }
+
       var isExpanded = expandedSubjects[k] === true;
       var evs = evalsFor(k);
       var evRows = evs.length ? evs.map(function (e, i) { return '<div class="eval-row"><span class="ev-n">' + esc(e.nome || 'Avaliação') + '</span><span class="ev-d">' + esc(e.data || '—') + '</span><span class="ev-v">' + esc(e.nota) + ' pts</span><span class="ev-x" data-evx="' + k + '|' + i + '">✕</span></div>'; }).join('') : '<div class="eval-empty">Nenhuma avaliação lançada ainda.</div>';
+      
       html += '<div class="subj' + (it.locked ? ' locked' : '') + (isExpanded ? ' open' : '') + '" id="card-' + k.replace(/\|/g, '_') + '">'
         + '<div class="subj-header" data-toggle-k="' + k + '">'
         + '<div class="subj-header-top">'
-        + '<div class="top"><div><span class="nm">' + it.nome + '</span>' + (it.cod && it.cod !== 'OPT' ? '<span class="cd">' + it.cod + '</span>' : '') + (it.dept ? '<span class="tag-dept ' + it.dept + '">' + it.dept.toUpperCase() + '</span>' : '') + (it.opt ? '<span class="rm-opt" data-rm="' + encodeURIComponent(it.nome) + '">remover</span>' : '') + '<div class="ch">' + it.ch + ' h/a · aprovação ≥ 60</div></div><span class="badge ' + st[1] + '">' + st[0] + '</span></div>'
+        + '<div class="top"><div><span class="nm">' + it.nome + '</span>' + (it.cod && it.cod !== 'CUSTOM' ? '<span class="cd">' + it.cod + '</span>' : '') + (it.dept ? '<span class="tag-dept ' + it.dept.toLowerCase() + '">' + it.dept.toUpperCase() + '</span>' : '') + '<button class="rm-opt" data-rm-name="' + encodeURIComponent(it.nome) + '" data-rm-key="' + encodeURIComponent(k) + '" title="Excluir matéria da grade">' + TRASH_ICON + '</button><div class="ch">' + it.ch + ' h/a · aprovação ≥ 60</div></div><span class="badge ' + st[1] + '">' + st[0] + '</span></div>'
         + '<div class="subj-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>'
         + '</div>'
         + '<div class="subj-compact-bars">'
@@ -427,6 +611,7 @@ document.addEventListener('DOMContentLoaded', function () {
         + '</div>'
         + '</div>';
     });
+
     var gradeListElem = document.getElementById('grade-list');
     if (gradeListElem) gradeListElem.innerHTML = html;
     var media = cntN ? (somaN / cntN).toFixed(1) : '—';
@@ -444,18 +629,57 @@ document.addEventListener('DOMContentLoaded', function () {
     drawCra();
   }
 
+  /* LISTENER DE REMOÇÃO DE DISCIPLINA DA GRADE */
   var gradeListContainer = document.getElementById('grade-list');
   if (gradeListContainer) {
     gradeListContainer.addEventListener('click', function (e) {
       var target = e.target;
+      var rmBtn = target.closest('.rm-opt');
+      
+      // EXCLUSÃO DA MATÉRIA DA GRADE
+      if (rmBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        var name = decodeURIComponent(rmBtn.getAttribute('data-rm-name'));
+        var keyVal = decodeURIComponent(rmBtn.getAttribute('data-rm-key'));
+
+        if (!confirm('Deseja realmente remover a matéria "' + name + '" deste semestre?')) {
+          return;
+        }
+
+        removedSubjs[curSem] = removedSubjs[curSem] || [];
+        if (removedSubjs[curSem].indexOf(name) === -1) {
+          removedSubjs[curSem].push(name);
+          store.set('bp_removed', removedSubjs);
+        }
+
+        if (addedOpt[curSem]) {
+          addedOpt[curSem] = addedOpt[curSem].filter(function (n) { return n !== name; });
+          store.set('bp_opt', addedOpt);
+        }
+
+        delete faltas[keyVal]; delete notes[keyVal]; delete evals[keyVal];
+        // Remove também chave por nome se diferente
+        var altKey = curSem + '|' + name;
+        delete faltas[altKey]; delete notes[altKey]; delete evals[altKey];
+
+        store.set('bp_faltas', faltas); store.set('bp_notes', notes); store.set('bp_evals', evals);
+        
+        renderNotas(); 
+        renderVisao();
+        flashSave(); 
+        return;
+      }
+
       var header = target.closest('.subj-header');
       if (header) {
-        if (target.closest('.rm-opt')) return;
         var kToggle = header.getAttribute('data-toggle-k');
         var card = document.getElementById('card-' + kToggle.replace(/\|/g, '_'));
         if (card) { var isOpen = card.classList.toggle('open'); expandedSubjects[kToggle] = isOpen; store.set('bp_expanded', expandedSubjects); }
         return;
       }
+
       if (target.classList.contains('ev-btn-add')) {
         var form = target.closest('.eval-add');
         var k3 = form.getAttribute('data-k');
@@ -465,22 +689,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (notaVal === '' || isNaN(parseFloat(notaVal))) return;
         evals[k3] = evals[k3] || [];
         evals[k3].push({ nome: nome, data: data, nota: Math.max(0, Math.min(100, parseFloat(notaVal))) });
-        store.set('bp_evals', evals); renderNotas(); flashSave(); return;
+        store.set('bp_evals', evals); renderNotas(); renderVisao(); flashSave(); return;
       }
-      var rm = target.closest('.rm-opt');
-      if (rm) {
-        var name = decodeURIComponent(rm.getAttribute('data-rm'));
-        addedOpt[curSem] = (addedOpt[curSem] || []).filter(function (n) { return n !== name; });
-        store.set('bp_opt', addedOpt);
-        var k = curSem + '|' + name;
-        delete faltas[k]; delete notes[k]; delete evals[k];
-        store.set('bp_faltas', faltas); store.set('bp_notes', notes); store.set('bp_evals', evals);
-        renderNotas(); flashSave(); return;
-      }
+
       var f = target.closest('button[data-f]');
-      if (f) { var k2 = f.getAttribute('data-f'), d = parseInt(f.getAttribute('data-d'), 10); faltas[k2] = Math.max(0, (faltas[k2] || 0) + d); store.set('bp_faltas', faltas); renderNotas(); flashSave(); return; }
+      if (f) { var k2 = f.getAttribute('data-f'), d = parseInt(f.getAttribute('data-d'), 10); faltas[k2] = Math.max(0, (faltas[k2] || 0) + d); store.set('bp_faltas', faltas); renderNotas(); renderVisao(); flashSave(); return; }
       var xr = target.closest('.ev-x');
-      if (xr) { var dataVal = xr.getAttribute('data-evx'); var parts = dataVal.split('|'); var key = parts[0] + '|' + parts[1]; var index = parseInt(parts[2], 10); if (evals[key]) { evals[key].splice(index, 1); store.set('bp_evals', evals); renderNotas(); flashSave(); } return; }
+      if (xr) { var dataVal = xr.getAttribute('data-evx'); var parts = dataVal.split('|'); var key = parts[0] + '|' + parts[1]; var index = parseInt(parts[2], 10); if (evals[key]) { evals[key].splice(index, 1); store.set('bp_evals', evals); renderNotas(); renderVisao(); flashSave(); } return; }
     });
 
     gradeListContainer.addEventListener('input', function (e) {
@@ -489,60 +704,95 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  var sel = document.getElementById('opt-select');
-  if (sel) {
-    sel.innerHTML = OPTATIVAS.map(function (o) { return '<option>' + o + '</option>'; }).join('');
+  /* ===== 11. ADIÇÃO E CUSTOMIZAÇÃO DA GRADE ===== */
+  function initIrregularGridControls() {
+    var gradeSelect = document.getElementById('grade-subj-select');
+    var addGradeBtn = document.getElementById('btn-add-grade-subj');
+    var restoreBtn = document.getElementById('btn-restore-default-grid');
+    var optSelect = document.getElementById('opt-select');
     var optAddBtn = document.getElementById('opt-add');
-    if (optAddBtn) {
-      optAddBtn.addEventListener('click', function () {
-        var name = sel.value;
-        addedOpt[curSem] = addedOpt[curSem] || [];
-        if (addedOpt[curSem].indexOf(name) === -1) {
-          addedOpt[curSem].push(name);
+
+    if (gradeSelect) {
+      var optionsHtml = '';
+      for (var s = 1; s <= 9; s++) {
+        var subjs = listFor(String(s));
+        subjs.forEach(function(sub) {
+          if (!sub.opt) {
+            optionsHtml += '<option value="' + sub.nome + '">' + s + 'º P · ' + sub.nome + ' (' + sub.ch + 'h)</option>';
+          }
+        });
+      }
+      gradeSelect.innerHTML = optionsHtml;
+    }
+
+    if (optSelect) {
+      optSelect.innerHTML = OPTATIVAS.map(function (o) { return '<option>' + o + '</option>'; }).join('');
+    }
+
+    function tentarAdicionarMateria(nomeMateria) {
+      var activeList = listFor(curSem);
+      
+      // Checa se a matéria já está ativa no semestre atual
+      var jaAtiva = activeList.some(function(it) { return it.nome === nomeMateria; });
+      if (jaAtiva) {
+        alert('A matéria "' + nomeMateria + '" já está cadastrada no semestre atual.');
+        return;
+      }
+
+      // Checa se já foi APROVADO em algum período anterior
+      var semAprovado = isAprovadoEmSemestreAnterior(nomeMateria, curSem);
+      if (semAprovado !== false) {
+        alert('Não é possível adicionar: O aluno já foi APROVADO na matéria "' + nomeMateria + '" no ' + semAprovado + 'º período.');
+        return;
+      }
+
+      // Restauração do removedSubjs caso a matéria estivesse removida anteriormente
+      if (removedSubjs[curSem]) {
+        removedSubjs[curSem] = removedSubjs[curSem].filter(function(n) { return n !== nomeMateria; });
+        store.set('bp_removed', removedSubjs);
+      }
+
+      addedOpt[curSem] = addedOpt[curSem] || [];
+      if (addedOpt[curSem].indexOf(nomeMateria) === -1) {
+        addedOpt[curSem].push(nomeMateria);
+        store.set('bp_opt', addedOpt);
+      }
+
+      renderNotas();
+      renderVisao();
+      flashSave();
+    }
+
+    if (addGradeBtn && gradeSelect) {
+      addGradeBtn.addEventListener('click', function() {
+        tentarAdicionarMateria(gradeSelect.value);
+      });
+    }
+
+    if (optAddBtn && optSelect) {
+      optAddBtn.addEventListener('click', function() {
+        tentarAdicionarMateria(optSelect.value);
+      });
+    }
+
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', function() {
+        if (confirm('Deseja restaurar a grade padrão do ' + curPeriod + 'º período? Matérias removidas voltarão e adições personalizadas deste semestre serão limpas.')) {
+          delete addedOpt[curSem];
+          delete removedSubjs[curSem];
           store.set('bp_opt', addedOpt);
+          store.set('bp_removed', removedSubjs);
           renderNotas();
+          renderVisao();
           flashSave();
         }
       });
     }
   }
 
-  function realCRA() { var accCH = 0, accWG = 0; for (var s = 1; s <= curPeriod; s++) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); if (!isNaN(v)) { accCH += it.ch; accWG += v * it.ch; } }); } return accCH ? accWG / accCH : null; }
-  function doneHours() { var done = 0; for (var s = 1; s <= curPeriod; s++) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); var f = faltas[k] || 0; if (!isNaN(v) && v >= 60 && f <= maxFaltas(it.ch)) done += it.ch; }); } return done; }
-  function globalAvgNota() { var sum = 0, c = 0; for (var s = 1; s <= 9; s++) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); if (!isNaN(v)) { sum += v; c++; } }); } return c ? sum / c : 70; }
-  function craSeries() { var pts = [], accCH = 0, accWG = 0, gAvg = globalAvgNota(); for (var s = 1; s <= 9; s++) { if (s <= curPeriod) { listFor(String(s)).forEach(function (it) { var k = keyOf(String(s), it); var v = notaFinal(k); if (!isNaN(v)) { accCH += it.ch; accWG += v * it.ch; } }); } else { var ch = semTotalCH(s); accCH += ch; accWG += ch * gAvg; } pts.push(accCH ? +(accWG / accCH).toFixed(1) : 70.0); } return pts; }
+  setTimeout(initIrregularGridControls, 400);
 
-  function drawCra() {
-    var pts = craSeries();
-    var svg = document.getElementById('cra-chart'); if (!svg) return;
-    var W = 520, H = 160, padR = 14, padT = 10, padB = 22, y0 = padT, y1 = H - padB, x0 = 38, x1 = W - padR, ymin = 40, ymax = 100;
-    var X = function (i) { return x0 + (x1 - x0) * (i / 8); };
-    var Y = function (v) { return y1 - (y1 - y0) * ((Math.max(ymin, Math.min(ymax, v)) - ymin) / (ymax - ymin)); };
-    var g = '';
-    [40, 70, 100].forEach(function (v) { var y = Y(v); g += '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="rgba(255,255,255,.1)"></line>'; g += '<text x="' + (x0 - 6) + '" y="' + (y + 3) + '" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="8" fill="rgba(232,242,238,.65)">' + v + '</text>'; });
-    var yt = Y(75);
-    g += '<line x1="' + x0 + '" y1="' + yt + '" x2="' + x1 + '" y2="' + yt + '" stroke="#0FA877" stroke-dasharray="4 4" stroke-width="1"></line>';
-    g += '<text x="' + x1 + '" y="' + (yt - 4) + '" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="7.5" fill="#7FE0BC">meta ~75</text>';
-    var poly = pts.map(function (v, i) { return X(i) + ',' + Y(v); }).join(' ');
-    g += '<polyline points="' + poly + '" fill="none" stroke="#C2EE73" stroke-width="2"></polyline>';
-    pts.forEach(function (v, i) { var real = (i + 1) <= curPeriod; g += '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="' + (real ? 4 : 3.2) + '" fill="' + (real ? '#C2EE73' : '#06201C') + '" stroke="#C2EE73" stroke-width="1.4"></circle>'; g += '<text x="' + X(i) + '" y="' + (y1 + 13) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.5" fill="rgba(232,242,238,.65)">' + (i + 1) + 'º</text>'; });
-    svg.innerHTML = g;
-    var simCraBig = document.getElementById('sim-cra-big');
-    if (simCraBig) {
-      var fin = pts[8] || 70.0;
-      simCraBig.innerHTML = '<div class="scv">' + fin.toFixed(1) + '</div><div class="scl">CRA projetado automaticamente ao final do 9º período</div><div class="scs">' + (fin >= 75 ? '✓ acima da meta ~75 do PPGEE-UFMG' : 'faltam ' + (75 - fin).toFixed(1) + ' pts para a meta ~75') + '</div>';
-    }
-  }
-
-  function renderIntegr() {
-    var done = doneHours(); var pct = Math.min(100, done / TOTAL_HA * 100); var cra = realCRA();
-    var integrElem = document.getElementById('integr');
-    if (integrElem) {
-      integrElem.innerHTML = '<div class="itop"><h4>Progresso de integralização</h4><span class="icount">' + done + ' / ' + TOTAL_HA + ' h/a</span></div><div class="isub">Soma de h/aula aprovadas em todos os períodos desbloqueados, rumo ao total do curso.</div><div class="ibar"><div class="ifill" style="width:' + pct + '%"></div></div><div class="imeta"><span>Concluído <b>' + pct.toFixed(1) + '%</b></span><span>Restante <b>' + (TOTAL_HA - done) + ' h/a</b></span><span>CRA real <b>' + (cra !== null ? cra.toFixed(1) : '—') + '</b></span><span>Período atual <b>' + curPeriod + 'º</b></span></div>';
-    }
-  }
-
-  /* ===== 11. QUADRO DE HORÁRIOS, SALAS E FILTRO T1/T2 ===== */
+  /* ===== 12. QUADRO DE HORÁRIOS, SALAS E FILTRO T1/T2 ===== */
   var selectedTurmaFilter = 'ALL';
 
   var SCHED_DATA = {
@@ -728,11 +978,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-/* ========================================================
-     LÓGICA REORDENADA DA VISÃO GERAL & ALUNOS IRREGULARES
-     ======================================================== */
-  
-  /* Renderiza o Banner de Avisos no topo da Visão Geral */
+  /* ===== 13. PAINEL VISÃO GERAL INTEGRADO E DINÂMICO ===== */
   function renderVisaoAvisosBanner() {
     var banner = document.getElementById('vg-aviso-banner');
     var titleElem = document.getElementById('vg-aviso-title');
@@ -760,7 +1006,6 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
-  /* VISÃO GERAL COM ORDEM VERTICAL LIMPA */
   function renderVisao(){
     renderVisaoAvisosBanner();
     
@@ -824,14 +1069,12 @@ document.addEventListener('DOMContentLoaded', function () {
       '</select></div>' +
       '</div>';
 
-    // 1. Bloco de Horários da Semana
     var schedBlock = '<div class="ov-card" style="margin-bottom:var(--s3)"><div class="oh" style="flex-wrap:wrap; gap:10px;">' +
       '<div><h4>Grade da semana · ' + activePeriodNumber + 'º período</h4>' +
       '<span class="olink" data-go="horarios" style="display:inline-block; margin-top:4px;">editar períodos e salas →</span></div>' +
       schedControls + 
       '</div><div style="overflow-x:auto">' + schedTable(false) + '</div></div>';
 
-    // 2. Próximos Eventos
     var eventos = '<div class="ov-card" style="margin-bottom:var(--s3)"><div class="oh"><h4>Próximos eventos (Unificados)</h4><span class="olink" data-go="calendario">ver calendário completo →</span></div>'
       + (prox.length ? prox.map(function(a){
         var d = new Date(a.date + 'T00:00:00');
@@ -841,12 +1084,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }).join('') : '<div class="ov-empty">Nenhum evento futuro encontrado.</div>')
       + '</div>';
 
-    // 3. Faltas em Risco
     var faltasRisco = '<div class="ov-card" style="margin-bottom:var(--s3)"><div class="oh"><h4>Faltas em risco</h4><span class="olink" data-go="notas">ver notas &amp; faltas →</span></div>'
       + (risco.length ? risco.map(function(r){ return '<div class="ov-li"><div><div class="oname">' + esc(r.nome) + '</div><div class="osub">' + r.sem + 'º período · ' + r.f + ' de ' + r.mx + ' faltas</div></div><span class="badge ' + r.stat[1] + '">' + r.stat[0] + '</span></div>'; }).join('') : '<div class="ov-empty">Tudo tranquilo — nenhuma disciplina em risco.</div>')
       + '</div>';
 
-    // 4. KPIs
     var kpis = ''
       + '<div class="ov-kpi"><div class="kv">' + (cra !== null ? cra.toFixed(1) : '—') + '</div><div class="kl">CRA real</div><div class="ks">' + (cra !== null ? (cra >= 75 ? 'acima da meta 75' : 'meta ~75') : 'sem notas ainda') + '</div></div>'
       + '<div class="ov-kpi"><div class="kv">' + pctInt.toFixed(0) + '%</div><div class="kl">Integralização</div><div class="ks">' + done + ' / ' + TOTAL_HA + ' h/a</div></div>'
@@ -856,7 +1097,6 @@ document.addEventListener('DOMContentLoaded', function () {
     wrap.innerHTML = schedBlock;
     if (extraBlocks) extraBlocks.innerHTML = eventos + faltasRisco + '<div class="ov-kpis">' + kpis + '</div>';
 
-    /* LISTENERS DOS DROPDOWNS */
     var vgPeriodSelect = document.getElementById('vg-sched-period-select');
     if (vgPeriodSelect) {
       vgPeriodSelect.addEventListener('change', function(){
@@ -875,53 +1115,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  /* SUPORTE A ALUNOS IRREGULARES (População dos Selects de Matérias e Restauração) */
-  function initIrregularGridControls() {
-    var gradeSelect = document.getElementById('grade-subj-select');
-    var addGradeBtn = document.getElementById('btn-add-grade-subj');
-    var restoreBtn = document.getElementById('btn-restore-default-grid');
-
-    if (gradeSelect) {
-      var optionsHtml = '';
-      for (var s = 1; s <= 9; s++) {
-        var subjs = listFor(String(s));
-        subjs.forEach(function(sub) {
-          if (!sub.opt) {
-            optionsHtml += '<option value="' + sub.nome + '">' + s + 'º P · ' + sub.nome + ' (' + sub.ch + 'h)</option>';
-          }
-        });
-      }
-      gradeSelect.innerHTML = optionsHtml;
-    }
-
-    if (addGradeBtn && gradeSelect) {
-      addGradeBtn.addEventListener('click', function() {
-        var name = gradeSelect.value;
-        addedOpt[curSem] = addedOpt[curSem] || [];
-        if (addedOpt[curSem].indexOf(name) === -1) {
-          addedOpt[curSem].push(name);
-          store.set('bp_opt', addedOpt);
-          renderNotas(); flashSave();
-        }
-      });
-    }
-
-    if (restoreBtn) {
-      restoreBtn.addEventListener('click', function() {
-        if (confirm("Deseja restaurar as disciplinas padrão do " + curPeriod + "º período? As matérias personalizadas adicionadas neste semestre serão removidas.")) {
-          delete addedOpt[curSem];
-          store.set('bp_opt', addedOpt);
-          renderNotas(); 
-          flashSave();
-        }
-      });
-    }
-  }
-
-  // Registra no carregamento
-  setTimeout(initIrregularGridControls, 500);
-
-  /* ===== 13. AGENDA DE EVENTOS & HORAS COMPLEMENTARES ===== */
+  /* ===== 14. AGENDA DE EVENTOS & HORAS COMPLEMENTARES ===== */
   function renderAgenda() { var wrap = document.getElementById('agenda-wrap'); if(!wrap) return; var today = new Date(); today.setHours(0, 0, 0, 0); var sorted = agenda.map(function (a, i) { return { a: a, i: i }; }).sort(function (x, y) { return (x.a.date || '').localeCompare(y.a.date || ''); }); var items = sorted.length ? sorted.map(function (o) { var a = o.a; var d = a.date ? new Date(a.date + 'T00:00:00') : null; var dias = d ? Math.round((d - today) / 86400000) : null; var sub = d ? (dias > 0 ? 'em ' + dias + ' dia(s)' : (dias === 0 ? 'hoje' : Math.abs(dias) + ' dia(s) atrás')) : ''; var dim = (dias !== null && dias < 0) ? 'opacity:.55;' : ''; return '<div class="titem" style="' + dim + '"><div><div class="ti-main">' + esc(a.title) + '</div><div class="ti-sub"><span class="ti-tag">' + esc(a.type) + '</span> · ' + esc(a.date || '') + (sub ? ' · ' + sub : '') + '</div></div><span class="ti-rm" data-rm="' + o.i + '">remover</span></div>'; }).join('') : '<div class="empty">Sem eventos de agenda.</div>'; wrap.innerHTML = '<div class="addrow"><input id="ag-date" type="date"><input class="grow" id="ag-title" placeholder="Título (ex: Exame Especial - Cálculo I)"><select id="ag-type"><option>Prova</option><option>Entrega</option><option>Evento</option><option>Reunião</option><option>Outro</option></select><input class="grow" id="ag-desc" placeholder="Breve descrição opcional"><button class="add" id="ag-add">Adicionar</button></div>' + items; }
   (function () { var w = document.getElementById('agenda-wrap'); if (w) { w.addEventListener('click', function (e) { var a = e.target.closest('#ag-add'); if (a) { var date = document.getElementById('ag-date').value; var title = document.getElementById('ag-title').value; var type = document.getElementById('ag-type').value; var desc = document.getElementById('ag-desc').value; if (!title) { alert('Por favor, informe o título do evento.'); return; } if (!date) { var td = new Date(); date = td.getFullYear() + '-' + String(td.getMonth() + 1).padStart(2, '0') + '-' + String(td.getDate()).padStart(2, '0'); } agenda.push({ date: date, title: title, type: type, desc: desc }); store.set('bp_agenda', agenda); renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); return; } var rm = e.target.closest('.ti-rm'); if (rm) { agenda.splice(+rm.getAttribute('data-rm'), 1); store.set('bp_agenda', agenda); renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); } }); } })();
 
@@ -933,16 +1127,16 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderComp() { var wrap = document.getElementById('comp-wrap'); if (!wrap) return; var total = comp.items.reduce(function (a, b) { return a + (parseFloat(b.horas) || 0); }, 0); var pct = comp.meta > 0 ? Math.min(100, total / comp.meta * 100) : 0; var items = comp.items.length ? comp.items.map(function (it, i) { return '<div class="titem"><div><div class="ti-main">' + esc(it.desc || it.cat) + '</div><div class="ti-sub"><span class="ti-tag">' + esc(it.cat) + '</span> · ' + (parseFloat(it.horas) || 0) + ' h</div></div><span class="ti-rm" data-rm="' + i + '">remover</span></div>'; }).join('') : '<div class="empty">Nenhuma atividade lançada ainda.</div>'; wrap.innerHTML = '<div class="miniprog" style="margin-bottom:var(--s4)"><div class="mt"><span>Horas complementares</span><b>' + total + ' / ' + comp.meta + ' h</b></div><div class="mbar"><div class="mf" style="width:' + pct + '%"></div></div></div><div class="addrow"><select id="comp-cat"><option>Eventos/Palestras</option><option>Cursos</option><option>Iniciação Científica</option><option>Monitoria</option><option>Extensão</option><option>Publicação</option><option>Visita técnica</option><option>Outro</option></select><input class="grow" id="comp-desc" placeholder="Descrição"><input class="mini" id="comp-h" type="number" placeholder="horas"><button class="add" id="comp-add">Adicionar</button><label>meta <input class="mini" id="comp-meta" type="number" value="' + comp.meta + '"></label></div>' + items; }
   (function () { var w = document.getElementById('comp-wrap'); if (w) { w.addEventListener('click', function (e) { var a = e.target.closest('#comp-add'); if (a) { var cat = document.getElementById('comp-cat').value, desc = document.getElementById('comp-desc').value, h = document.getElementById('comp-h').value; if (!h) { return; } comp.items.push({ cat: cat, desc: desc, horas: h }); store.set('bp_comp', comp); renderComp(); renderVisao(); flashSave(); return; } var rm = e.target.closest('.ti-rm'); if (rm) { comp.items.splice(+rm.getAttribute('data-rm'), 1); store.set('bp_comp', comp); renderComp(); renderVisao(); flashSave(); } }); w.addEventListener('change', function (e) { if (e.target.id === 'comp-meta') { comp.meta = parseFloat(e.target.value) || 0; store.set('bp_comp', comp); renderComp(); renderVisao(); flashSave(); } }); } })();
 
-  /* ===== 14. PLANEJADOR DE OPTATIVAS ===== */
+  /* ===== 15. PLANEJADOR DE OPTATIVAS ===== */
   function chOfOptNode(nd) { return CH_BY_NAME[nd.n] || 30; }
   function optNodes() { return GNODES.filter(function (n) { return n.opt; }); }
   function renderPlanner() { var pool = document.getElementById('pool-items'); var grid = document.getElementById('plan-grid'); if (!pool || !grid) return; var periods = [3, 4, 5, 7, 8, 9]; grid.innerHTML = periods.map(function (p) { return '<div class="plan-col" data-p="' + p + '"><div class="pct">' + p + 'º período</div><div class="pch" id="pch-' + p + '"></div><div class="pdrop" id="drop-' + p + '"></div></div>'; }).join(''); pool.innerHTML = ''; optNodes().forEach(function (o) { if (plan[o.id] === undefined) { pool.appendChild(chip(o, null)); } }); periods.forEach(function (p) { var d = document.getElementById('drop-' + p); optNodes().forEach(function (o) { if (plan[o.id] === p) d.appendChild(chip(o, p)); }); updateColCh(p); }); attachDnD(); }
   function chip(nd, period) { var el = document.createElement('div'); el.className = 'optchip'; el.setAttribute('draggable', 'true'); el.setAttribute('data-id', nd.id); var bad = false, warn = ''; if (period !== null) { var rel = relatives(nd.id); rel.prereqs.forEach(function (prId) { var prNode = nodeOf(prId); if (!prNode) return; var satisfied = prNode.opt ? (plan[prId] !== undefined && plan[prId] < period) : (prNode.p < period); if (!satisfied) { bad = true; warn = 'Pré: ' + prNode.n + ' (' + prNode.p + 'º)'; } }); } if (bad) el.classList.add('bad'); el.innerHTML = '<span>' + nd.n + '<small> · ' + chOfOptNode(nd) + ' h/a</small>' + (bad ? '<div class="plan-warn">⚠ ' + warn + ' antes</div>' : '') + '</span>'; return el; }
   function updateColCh(p) { var sum = 0; optNodes().forEach(function (o) { if (plan[o.id] === p) sum += chOfOptNode(o); }); var el = document.getElementById('pch-' + p); if (el) el.textContent = sum + ' h/a planejadas'; }
   var dragId = null;
-  function attachDnD() { document.querySelectorAll('.optchip').forEach(function (c) { c.addEventListener('dragstart', function () { dragId = c.getAttribute('data-id'); c.classList.add('dragging'); }); c.addEventListener('dragend', function () { c.classList.remove('dragging'); }); }); document.querySelectorAll('.plan-col').forEach(function (col) { col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('over'); }); col.addEventListener('dragleave', function () { col.classList.remove('over'); }); col.addEventListener('drop', function (e) { e.preventDefault(); col.classList.remove('over'); if (dragId === null) return; plan[dragId] = parseInt(col.getAttribute('data-p'), 10); store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); }); var pool = document.getElementById('plan-pool'); if (pool) { pool.addEventListener('dragover', function (e) { e.preventDefault(); }); pool.addEventListener('drop', function (e) { e.preventDefault(); if (dragId === null) return; delete plan[dragId]; store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); } }
+  function attachDnD() { document.querySelectorAll('.optchip').forEach(function (c) { c.addEventListener('dragstart', function () { dragId = c.getAttribute('data-id'); c.classList.add('dragging'); }); c.addEventListener('dragend', function () { c.classList.remove('dragging'); }); }); document.querySelectorAll('.plan-col').forEach(function (col) { col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('over'); }); col.addEventListener('dragleave', function (e) { e.preventDefault(); col.classList.remove('over'); }); col.addEventListener('drop', function (e) { e.preventDefault(); col.classList.remove('over'); if (dragId === null) return; plan[dragId] = parseInt(col.getAttribute('data-p'), 10); store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); }); var pool = document.getElementById('plan-pool'); if (pool) { pool.addEventListener('dragover', function (e) { e.preventDefault(); }); pool.addEventListener('drop', function (e) { e.preventDefault(); if (dragId === null) return; delete plan[dragId]; store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); } }
 
-  /* ===== 15. CALENDÁRIO ACADÊMICO E EMENTAS KANBAN ===== */
+  /* ===== 16. CALENDÁRIO ACADÊMICO E EMENTAS KANBAN ===== */
   var calendarCurrentDate = new Date(2026, 7, 1);
   function renderCalendario() {
     var grid = document.getElementById('calendar-days-grid'); var monthTitle = document.getElementById('cal-month-title'); var statsBox = document.getElementById('cal-stats-box'); if (!grid || !monthTitle || !statsBox) return;
@@ -981,21 +1175,17 @@ document.addEventListener('DOMContentLoaded', function () {
     return pill;
   }
 
-/* ========================================================
-     TROCA DAS SUB-ABAS DE GRADE OBRIGATÓRIA / OPTATIVAS (v35)
-     ======================================================== */
+  /* ===== 17. SUB-ABAS DA GRADE OBRIGATÓRIA / OPTATIVAS ===== */
   document.addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-grade-tab]');
     if (!btn) return;
 
-    var tabKey = btn.getAttribute('data-grade-tab'); // 'obrigatorias' ou 'optativas'
+    var tabKey = btn.getAttribute('data-grade-tab');
 
-    // Ativa o botão selecionado
     document.querySelectorAll('button[data-grade-tab]').forEach(function (x) {
       x.classList.toggle('on', x === btn);
     });
 
-    // Mostra o bloco de conteúdo correspondente
     var blockObr = document.getElementById('grade-tab-obrigatorias');
     var blockOpt = document.getElementById('grade-tab-optativas');
 
@@ -1054,14 +1244,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ===== BACKUPS E ADMIN ===== */
-  var KEYS = ['bp_faltas', 'bp_rooms', 'bp_opt', 'bp_plan', 'bp_curperiod', 'bp_notes', 'bp_evals', 'bp_comp', 'bp_agenda', 'bp_theme', 'bp_dataversion', 'bp_expanded'];
+  var KEYS = ['bp_faltas', 'bp_rooms', 'bp_opt', 'bp_plan', 'bp_curperiod', 'bp_notes', 'bp_evals', 'bp_comp', 'bp_agenda', 'bp_theme', 'bp_dataversion', 'bp_expanded', 'bp_removed'];
   var fabBackup = document.getElementById('fab-backup'); if (fabBackup) fabBackup.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); var data = {}; KEYS.forEach(function (k) { var v = localStorage.getItem(k); if (v !== null) data[k] = v; }); data.__exported = new Date().toISOString(); var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'biopulse-backup.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 120); flashSave(); });
   var fabImport = document.getElementById('fab-import'); if (fabImport) fabImport.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); var impFile = document.getElementById('import-file'); if (impFile) impFile.click(); });
   var impFileElem = document.getElementById('import-file'); if (impFileElem) impFileElem.addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { try { var data = JSON.parse(rd.result); if (!confirm('Restaurar este backup? Os dados atuais serão substituídos.')) return; KEYS.forEach(function (k) { if (data[k] !== undefined) localStorage.setItem(k, data[k]); }); location.reload(); } catch (err) { alert('Arquivo inválido.'); } }; rd.readAsText(f); e.target.value = ''; });
   var fabPrint = document.getElementById('fab-print'); if (fabPrint) fabPrint.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); window.print(); });
   var fabClear = document.getElementById('fab-clear'); if (fabClear) fabClear.addEventListener('click', function (e) { e.stopPropagation(); if (tools) tools.classList.remove('open'); if (confirm('Limpar TODOS os dados salvos? O tema será mantido.')) { KEYS.forEach(function (k) { if (k !== 'bp_theme') localStorage.removeItem(k); }); location.reload(); } });
 
-  /* ===== 16. TUTORIAL INTERATIVO / ONBOARDING ===== */
+  /* ===== 18. TUTORIAL INTERATIVO / ONBOARDING ===== */
   var onboardingOverlay = document.getElementById('onboarding-overlay');
   var onboardingCloseBtn = document.getElementById('onboarding-close-btn');
   var onboardingDismissBtn = document.getElementById('onboarding-dismiss-btn');
@@ -1202,7 +1392,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!hasSeen) { openOnboarding(); }
   }, 400);
 
-  /* ===== 17. INICIALIZAÇÃO DO SISTEMA (INIT) ===== */
+  /* ===== 19. INICIALIZAÇÃO DO SISTEMA (INIT) ===== */
   curSem = String(curPeriod);
   renderNotas(); 
   renderHorarios(); 

@@ -1015,3 +1015,32 @@ body.theme-dark #blog-comment-form button[type="submit"] {
     text-align: center !important;
   }
 }
+
+/* Estilo refinado para o botão com ícone de lixeira */
+.subj .rm-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid transparent;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+  padding: 0;
+}
+
+.subj .rm-opt:hover {
+  background: var(--danger-bg);
+  border-color: rgba(217, 83, 79, 0.3);
+  color: #d9534f;
+  transform: scale(1.08);
+}
+
+.subj .rm-opt svg {
+  pointer-events: none;
+}
