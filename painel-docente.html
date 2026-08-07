@@ -1,3 +1,5 @@
+```html
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -63,6 +65,48 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(15, 168, 119, 0.35);
     }
+
+    /* Modal de Senha Integrado */
+    .senha-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 33, 29, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .senha-modal-overlay.open {
+      display: flex;
+    }
+    .senha-modal-box {
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .senha-modal-btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn-sec {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -75,7 +119,7 @@
       </p>
     </div>
 
-    <form id="form-publicar-aviso" class="form-grid">
+    <form id="form-publicar-aviso" class="form-grid" onsubmit="return false;">
       <div class="form-group full-width">
         <label for="aviso-titulo">Título do Aviso</label>
         <input type="text" id="aviso-titulo" placeholder="Ex: Alteração de Sala - Química Teórica" required>
@@ -94,7 +138,7 @@
           <option value="DEQUI">Departamento DEQUI</option>
           <option value="DECOM">Departamento DECOM</option>
           <option value="Diretoria">Diretoria / Geral</option>
-          <option value="Representantação">Representância de Turma</option>
+          <option value="Representação">Representância de Turma</option>
         </select>
       </div>
 
@@ -123,55 +167,121 @@
       </div>
 
       <div class="full-width" style="display: flex; justify-content: flex-end;">
-        <button type="submit" class="btn-submit" id="btn-enviar-aviso">Publicar Aviso Oficial</button>
+        <button type="button" class="btn-submit" id="btn-abrir-modal-senha">Publicar Aviso Oficial</button>
       </div>
     </form>
   </div>
 
+  <!-- MODAL INTEGRADO DE AUTENTICAÇÃO -->
+  <div class="senha-modal-overlay" id="modal-senha-overlay">
+    <div class="senha-modal-box">
+      <h3 style="font-size: 18px; color: var(--ink);">Autorização Docente</h3>
+      <p style="font-size: 13px; color: var(--ink-soft);">Digite a senha de autorização para homologar e publicar este aviso no sistema dos alunos:</p>
+      
+      <div class="form-group">
+        <label for="input-senha-mestra">Senha de Acesso</label>
+        <input type="password" id="input-senha-mestra" placeholder="Sua senha de autorização">
+      </div>
+
+      <div class="senha-modal-btns">
+        <button type="button" class="btn-sec" id="btn-cancelar-modal">Cancelar</button>
+        <button type="button" class="btn-submit" id="btn-confirmar-publicacao" style="margin-top:0;">Confirmar Publicação</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORTAÇÃO DO SDK DO SUPABASE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    const SUPABASE_URL = "https://bhalzllmozefvbytcghh.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_NftyZFwgxOi9x4XPxsalaw_uLCBeEeF";
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    document.addEventListener('DOMContentLoaded', function () {
+      const SUPABASE_URL = "https://bhalzllmozefvbytcghh.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_NftyZFwgxOi9x4XPxsalaw_uLCBeEeF";
+      const SENHA_MESTRA = "1910";
 
-    // Preenche as datas padrão (hoje até 7 dias depois)
-    const today = new Date().toISOString().split('T')[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    document.getElementById('aviso-data-inicio').value = today;
-    document.getElementById('aviso-data-fim').value = nextWeek;
+      // Datas padrão
+      const today = new Date().toISOString().split('T')[0];
+      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      document.getElementById('aviso-data-inicio').value = today;
+      document.getElementById('aviso-data-fim').value = nextWeek;
 
-    document.getElementById('form-publicar-aviso').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btn-enviar-aviso');
-      btn.disabled = true;
-      btn.textContent = "Publicando...";
+      const modal = document.getElementById('modal-senha-overlay');
+      const btnAbrirModal = document.getElementById('btn-abrir-modal-senha');
+      const btnCancelar = document.getElementById('btn-cancelar-modal');
+      const btnConfirmar = document.getElementById('btn-confirmar-publicacao');
+      const inputSenha = document.getElementById('input-senha-mestra');
 
-      const aviso = {
-        titulo: document.getElementById('aviso-titulo').value.trim(),
-        autor: document.getElementById('aviso-autor').value.trim(),
-        categoria: document.getElementById('aviso-categoria').value,
-        nivel: document.getElementById('aviso-nivel').value,
-        data_inicio: document.getElementById('aviso-data-inicio').value,
-        data_fim: document.getElementById('aviso-data-fim').value,
-        mensagem: document.getElementById('aviso-mensagem').value.trim(),
-        status: 'aprovado'
-      };
+      // 1. Clique no botão de enviar no formulário
+      btnAbrirModal.addEventListener('click', function () {
+        const titulo = document.getElementById('aviso-titulo').value.trim();
+        const autor = document.getElementById('aviso-autor').value.trim();
+        const mensagem = document.getElementById('aviso-mensagem').value.trim();
 
-      try {
-        const { error } = await supabaseClient.from('avisos').insert([aviso]);
-        if (error) throw error;
-        alert("Aviso cadastrado e publicado com sucesso no BioPulse!");
-        document.getElementById('form-publicar-aviso').reset();
-        document.getElementById('aviso-data-inicio').value = today;
-        document.getElementById('aviso-data-fim').value = nextWeek;
-      } catch (err) {
-        console.error(err);
-        alert("Erro ao publicar o aviso. Verifique a conexão.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Publicar Aviso Oficial";
-      }
+        if (!titulo || !autor || !mensagem) {
+          alert("Por favor, preencha todos os campos do formulário antes de publicar.");
+          return;
+        }
+
+        // Abre o modal de senha integrado
+        inputSenha.value = "";
+        modal.classList.add('open');
+        inputSenha.focus();
+      });
+
+      // 2. Fechar modal ao cancelar
+      btnCancelar.addEventListener('click', function () {
+        modal.classList.remove('open');
+      });
+
+      // 3. Confirmar publicação no modal
+      btnConfirmar.addEventListener('click', async function () {
+        if (inputSenha.value.trim() !== SENHA_MESTRA) {
+          alert("Senha de autorização incorreta!");
+          inputSenha.focus();
+          return;
+        }
+
+        modal.classList.remove('open');
+
+        if (!window.supabase) {
+          alert("Erro: Não foi possível carregar a conexão com o Supabase.");
+          return;
+        }
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        btnAbrirModal.disabled = true;
+        btnAbrirModal.textContent = "Publicando no Supabase...";
+
+        const avisoData = {
+          titulo: document.getElementById('aviso-titulo').value.trim(),
+          autor: document.getElementById('aviso-autor').value.trim(),
+          categoria: document.getElementById('aviso-categoria').value,
+          nivel: document.getElementById('aviso-nivel').value,
+          data_inicio: document.getElementById('aviso-data-inicio').value,
+          data_fim: document.getElementById('aviso-data-fim').value,
+          mensagem: document.getElementById('aviso-mensagem').value.trim(),
+          status: 'aprovado'
+        };
+
+        try {
+          const { error } = await supabaseClient.from('avisos').insert([avisoData]);
+          if (error) throw error;
+
+          alert("Aviso cadastrado e publicado com sucesso no BioPulse!");
+          document.getElementById('form-publicar-aviso').reset();
+          document.getElementById('aviso-data-inicio').value = today;
+          document.getElementById('aviso-data-fim').value = nextWeek;
+        } catch (err) {
+          console.error("Erro Supabase:", err);
+          alert("Erro ao publicar no banco de dados. Verifique a tabela 'avisos' no Supabase.");
+        } finally {
+          btnAbrirModal.disabled = false;
+          btnAbrirModal.textContent = "Publicar Aviso Oficial";
+        }
+      });
     });
   </script>
 </body>
 </html>
+```
