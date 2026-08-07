@@ -193,11 +193,20 @@
   <!-- IMPORTAÇÃO DO SDK DO SUPABASE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script>
+<script>
     document.addEventListener('DOMContentLoaded', function () {
       const SUPABASE_URL = "https://bhalzllmozefvbytcghh.supabase.co";
       const SUPABASE_KEY = "sb_publishable_NftyZFwgxOi9x4XPxsalaw_uLCBeEeF";
-      const SENHA_MESTRA = "1910";
+      
+      const HASH_SENHA_MESTRA = "583f71b9389e0813f8863f68d6f51f471e98e219fbdd32e6504a37706d8a2a8d";
+
+
+      async function calcularSHA256(texto) {
+        const msgUint8 = new TextEncoder().encode(texto);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
 
       // Datas padrão
       const today = new Date().toISOString().split('T')[0];
@@ -222,20 +231,22 @@
           return;
         }
 
-        // Abre o modal de senha integrado
         inputSenha.value = "";
         modal.classList.add('open');
         inputSenha.focus();
       });
 
-      // 2. Fechar modal ao cancelar
+      // 2. Fechar modal
       btnCancelar.addEventListener('click', function () {
         modal.classList.remove('open');
       });
 
-      // 3. Confirmar publicação no modal
+      // 3. Confirmar publicação com validação de Hash
       btnConfirmar.addEventListener('click', async function () {
-        if (inputSenha.value.trim() !== SENHA_MESTRA) {
+        const senhaDigitada = inputSenha.value.trim();
+        const hashDigitado = await calcularSHA256(senhaDigitada);
+
+        if (hashDigitado !== HASH_SENHA_MESTRA) {
           alert("Senha de autorização incorreta!");
           inputSenha.focus();
           return;
