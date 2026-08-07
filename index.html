@@ -248,9 +248,26 @@
       </div>
     </div>
 
+<!-- SUB-ABA 1: VISÃO GERAL (REORDENADA COM BARRAS DE AVISO NO TOPO) -->
     <div class="panel-block on" id="block-visao">
-      <div class="note reveal" style="margin-top:0;margin-bottom:var(--s4)">Resumo do seu percurso — CRA, integralização, grade da semana, próximos eventos e o que precisa de atenção. <span class="flag">Atualiza sozinho conforme você usa o painel</span></div>
+      <!-- Item 1: Banner Retangular de Avisos do Curso (Redireciona para #page-avisos) -->
+      <div class="aviso-banner-card reveal" id="vg-aviso-banner" style="display:none; margin-bottom: var(--s3); cursor: pointer;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="aviso-tag-pill critico" id="vg-aviso-pill">Novo Aviso</span>
+            <span id="vg-aviso-title" style="font-size:13.5px; font-weight:700; color:var(--ink);">Buscando avisos da coordenação...</span>
+          </div>
+          <span style="font-size:11.5px; font-weight:700; color:var(--accent);">Acessar Mural de Avisos →</span>
+        </div>
+      </div>
+
+      <!-- Item 2: Grade Semanal do Horário (Dynamic Sched Block) -->
       <div id="visao-wrap"></div>
+
+      <!-- Item 3 & 4: Blocos de Próximos Eventos e Faltas em Risco -->
+      <div id="visao-extra-blocks"></div>
+
+      <!-- Item 5: Cards de KPIs e Simulador CRA -->
       <div class="notas-dashboard-grid reveal" style="margin-top:var(--s3)">
         <div class="sim-chart" id="sim-chart-wrap">
           <div class="sim-cra" id="sim-cra-big"></div>
@@ -266,15 +283,55 @@
           <div class="summary" id="grade-summary"></div>
         </div>
       </div>
+
+      <!-- Nota reposicionada no final da visão geral -->
+      <div class="note reveal" style="margin-top:var(--s4);margin-bottom:0">Resumo do seu percurso — CRA, integralização, grade da semana, próximos eventos e o que precisa de atenção. <span class="flag">Atualiza sozinho conforme você usa o painel</span></div>
     </div>
     
     <div class="panel-block" id="block-notas">
       <div class="note reveal" style="margin-top:0;margin-bottom:var(--s4)">Notas e faltas por disciplina. Clique num card para expandir e lançar avaliações. <span class="flag">O CRA e os indicadores ficam na Visão Geral</span></div>
       <div id="grade-list" class="reveal"></div>
-      <div class="addopt reveal" id="addopt-zone">
-        <span style="font-size:13px;color:var(--ink-soft);font-weight:600">Adicionar optativa:</span>
-        <select id="opt-select"></select>
-        <button class="add" id="opt-add">Adicionar</button>
+<!-- CUSTOMIZAÇÃO DA GRADE CURRICULAR (RESPONSIVO PARA MOBILE E DESKTOP) -->
+      <div class="addopt reveal" id="addopt-zone" style="display:flex; flex-direction:column; gap:16px; margin: var(--s4) 0; padding: 20px 18px; background: var(--bg-soft); border: 1px solid var(--line-soft); border-radius: var(--radius);">
+
+        <!-- 1. TÍTULO SEPARADO POR LINHA FINA -->
+        <div style="padding-bottom: 12px; border-bottom: 1px solid var(--line-soft);">
+          <h4 style="font-size: 13px; font-weight: 800; color: var(--ink); text-transform: uppercase; letter-spacing: .06em;">Customização da Grade Curricular</h4>
+        </div>
+
+        <!-- 2. DUAS OPÇÕES DE ADIÇÃO (RESPONSIVAS) -->
+        <div class="custom-grid-split">
+
+          <!-- Opção A: Matéria Obrigatória da Grade -->
+          <div class="custom-grid-col">
+            <label style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--ink-soft); letter-spacing: .05em;">Matéria da Grade Obrigatória:</label>
+            <div class="custom-input-group">
+              <select id="grade-subj-select" class="sched-select-dropdown" style="flex: 1; width: 100% !important;"></select>
+              <button id="btn-add-grade-subj" class="custom-add-btn">+ Adicionar</button>
+            </div>
+          </div>
+
+          <!-- Divisória Fina -->
+          <div class="custom-grid-divider"></div>
+
+          <!-- Opção B: Disciplina Optativa -->
+          <div class="custom-grid-col">
+            <label style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--ink-soft); letter-spacing: .05em;">Disciplina Optativa:</label>
+            <div class="custom-input-group">
+              <select id="opt-select" class="sched-select-dropdown" style="flex: 1; width: 100% !important;"></select>
+              <button id="opt-add" class="custom-add-btn">+ Optativa</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. RODAPÉ COM O BOTÃO RESTAURAR -->
+        <div class="custom-grid-footer">
+          <button id="btn-restore-default-grid">Restaurar grade padrão do período</button>
+        </div>
+
+      </div>
+
       </div>
     </div>
 

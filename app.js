@@ -728,9 +728,44 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* ===== 12. PAINEL VISÃO GERAL INTEGRADO E DINÂMICO ===== */
+/* ========================================================
+     LÓGICA REORDENADA DA VISÃO GERAL & ALUNOS IRREGULARES
+     ======================================================== */
+  
+  /* Renderiza o Banner de Avisos no topo da Visão Geral */
+  function renderVisaoAvisosBanner() {
+    var banner = document.getElementById('vg-aviso-banner');
+    var titleElem = document.getElementById('vg-aviso-title');
+    var pillElem = document.getElementById('vg-aviso-pill');
+    if (!banner || !titleElem) return;
+
+    var list = (window.BP_AVISOS && window.BP_AVISOS.AVISOS_DB) ? window.BP_AVISOS.AVISOS_DB : [];
+    if (!list.length) {
+      banner.style.display = 'none';
+      return;
+    }
+
+    var latestAviso = list[0];
+    banner.style.display = 'block';
+    titleElem.textContent = ' ' + latestAviso.titulo + ' (' + latestAviso.data + ')';
+    
+    if (pillElem) {
+      pillElem.textContent = latestAviso.nivel === 'critico' ? 'Aviso Crítico' : (latestAviso.nivel === 'atencao' ? 'Atenção' : 'Aviso');
+      pillElem.className = 'aviso-tag-pill ' + latestAviso.nivel;
+    }
+
+    banner.onclick = function() {
+      var btnNav = document.querySelector('nav button[data-page="avisos"]');
+      if (btnNav) btnNav.click();
+    };
+  }
+
+  /* VISÃO GERAL COM ORDEM VERTICAL LIMPA */
   function renderVisao(){
+    renderVisaoAvisosBanner();
+    
     var wrap = document.getElementById('visao-wrap'); 
+    var extraBlocks = document.getElementById('visao-extra-blocks');
     if(!wrap) return;
 
     var done = doneHours();
@@ -752,8 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
     risco.sort(function(a,b){ return b.ratio - a.ratio; });
     risco = risco.slice(0, 5);
 
-    var today = new Date(); 
-    today.setHours(0,0,0,0);
+    var today = new Date(); today.setHours(0,0,0,0);
     var combinedEvents = [];
 
     if (typeof CALENDAR_DB !== 'undefined') {
@@ -774,7 +808,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     combinedEvents.sort(function(x,y){ return x.date.localeCompare(y.date); });
     var prox = combinedEvents.slice(0, 5);
-
     var activePeriodNumber = (curPeriod > 2 ? 1 : curPeriod);
 
     var schedControls = '<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">' +
@@ -791,24 +824,15 @@ document.addEventListener('DOMContentLoaded', function () {
       '</select></div>' +
       '</div>';
 
+    // 1. Bloco de Horários da Semana
     var schedBlock = '<div class="ov-card" style="margin-bottom:var(--s3)"><div class="oh" style="flex-wrap:wrap; gap:10px;">' +
       '<div><h4>Grade da semana · ' + activePeriodNumber + 'º período</h4>' +
       '<span class="olink" data-go="horarios" style="display:inline-block; margin-top:4px;">editar períodos e salas →</span></div>' +
       schedControls + 
       '</div><div style="overflow-x:auto">' + schedTable(false) + '</div></div>';
 
-    var kpis = ''
-      + '<div class="ov-kpi"><div class="kv">' + (cra !== null ? cra.toFixed(1) : '—') + '</div><div class="kl">CRA real</div><div class="ks">' + (cra !== null ? (cra >= 75 ? 'acima da meta 75' : 'meta ~75') : 'sem notas ainda') + '</div></div>'
-      + '<div class="ov-kpi"><div class="kv">' + pctInt.toFixed(0) + '%</div><div class="kl">Integralização</div><div class="ks">' + done + ' / ' + TOTAL_HA + ' h/a</div></div>'
-      + '<div class="ov-kpi"><div class="kv">' + curPeriod + 'º</div><div class="kl">Período atual</div><div class="ks">' + (9 - curPeriod) + ' restante(s) de 9</div></div>'
-      + '<div class="ov-kpi"><div class="kv">' + compTotal + '</div><div class="kl">Horas complementares</div><div class="ks">' + compPct.toFixed(0) + '% da meta de ' + comp.meta + ' h</div></div>';
-
-    var bars = '<div class="ov-card"><div class="oh"><h4>Progresso geral</h4></div>'
-      + '<div class="miniprog"><div class="mt"><span>Integralização do curso</span><b>' + pctInt.toFixed(1) + '%</b></div><div class="mbar"><div class="mf" style="width:' + pctInt + '%"></div></div></div>'
-      + '<div class="miniprog" style="margin-top:18px"><div class="mt"><span>Horas complementares</span><b>' + compTotal + '/' + comp.meta + ' h</b></div><div class="mbar"><div class="mf" style="width:' + compPct + '%"></div></div></div>'
-      + '</div>';
-
-    var eventos = '<div class="ov-card"><div class="oh"><h4>Próximos eventos (Unificados)</h4><span class="olink" data-go="calendario">ver calendário completo →</span></div>'
+    // 2. Próximos Eventos
+    var eventos = '<div class="ov-card" style="margin-bottom:var(--s3)"><div class="oh"><h4>Próximos eventos (Unificados)</h4><span class="olink" data-go="calendario">ver calendário completo →</span></div>'
       + (prox.length ? prox.map(function(a){
         var d = new Date(a.date + 'T00:00:00');
         var dias = Math.round((d - today) / 86400000);
@@ -817,22 +841,28 @@ document.addEventListener('DOMContentLoaded', function () {
       }).join('') : '<div class="ov-empty">Nenhum evento futuro encontrado.</div>')
       + '</div>';
 
-    var faltasRisco = '<div class="ov-card" style="margin-top:var(--s3)"><div class="oh"><h4>Faltas em risco</h4><span class="olink" data-go="notas">ver notas &amp; faltas →</span></div>'
+    // 3. Faltas em Risco
+    var faltasRisco = '<div class="ov-card" style="margin-bottom:var(--s3)"><div class="oh"><h4>Faltas em risco</h4><span class="olink" data-go="notas">ver notas &amp; faltas →</span></div>'
       + (risco.length ? risco.map(function(r){ return '<div class="ov-li"><div><div class="oname">' + esc(r.nome) + '</div><div class="osub">' + r.sem + 'º período · ' + r.f + ' de ' + r.mx + ' faltas</div></div><span class="badge ' + r.stat[1] + '">' + r.stat[0] + '</span></div>'; }).join('') : '<div class="ov-empty">Tudo tranquilo — nenhuma disciplina em risco.</div>')
       + '</div>';
 
-    wrap.innerHTML = schedBlock + '<div class="ov-kpis">' + kpis + '</div><div class="ov-cols">' + bars + eventos + '</div>' + faltasRisco;
+    // 4. KPIs
+    var kpis = ''
+      + '<div class="ov-kpi"><div class="kv">' + (cra !== null ? cra.toFixed(1) : '—') + '</div><div class="kl">CRA real</div><div class="ks">' + (cra !== null ? (cra >= 75 ? 'acima da meta 75' : 'meta ~75') : 'sem notas ainda') + '</div></div>'
+      + '<div class="ov-kpi"><div class="kv">' + pctInt.toFixed(0) + '%</div><div class="kl">Integralização</div><div class="ks">' + done + ' / ' + TOTAL_HA + ' h/a</div></div>'
+      + '<div class="ov-kpi"><div class="kv">' + curPeriod + 'º</div><div class="kl">Período atual</div><div class="ks">' + (9 - curPeriod) + ' restante(s) de 9</div></div>'
+      + '<div class="ov-kpi"><div class="kv">' + compTotal + '</div><div class="kl">Horas complementares</div><div class="ks">' + compPct.toFixed(0) + '% da meta de ' + comp.meta + ' h</div></div>';
 
+    wrap.innerHTML = schedBlock;
+    if (extraBlocks) extraBlocks.innerHTML = eventos + faltasRisco + '<div class="ov-kpis">' + kpis + '</div>';
+
+    /* LISTENERS DOS DROPDOWNS */
     var vgPeriodSelect = document.getElementById('vg-sched-period-select');
     if (vgPeriodSelect) {
       vgPeriodSelect.addEventListener('change', function(){
         curPeriod = parseInt(this.value, 10);
         store.set('bp_curperiod', curPeriod);
-        buildPeriodMenu();
-        renderNotas();
-        renderVisao();
-        renderHorarios();
-        flashSave();
+        buildPeriodMenu(); renderNotas(); renderVisao(); renderHorarios(); flashSave();
       });
     }
 
@@ -840,11 +870,56 @@ document.addEventListener('DOMContentLoaded', function () {
     if (vgTurmaSelect) {
       vgTurmaSelect.addEventListener('change', function(){
         selectedTurmaFilter = this.value;
-        renderVisao();
-        renderHorarios();
+        renderVisao(); renderHorarios();
       });
     }
   }
+
+  /* SUPORTE A ALUNOS IRREGULARES (População dos Selects de Matérias e Restauração) */
+  function initIrregularGridControls() {
+    var gradeSelect = document.getElementById('grade-subj-select');
+    var addGradeBtn = document.getElementById('btn-add-grade-subj');
+    var restoreBtn = document.getElementById('btn-restore-default-grid');
+
+    if (gradeSelect) {
+      var optionsHtml = '';
+      for (var s = 1; s <= 9; s++) {
+        var subjs = listFor(String(s));
+        subjs.forEach(function(sub) {
+          if (!sub.opt) {
+            optionsHtml += '<option value="' + sub.nome + '">' + s + 'º P · ' + sub.nome + ' (' + sub.ch + 'h)</option>';
+          }
+        });
+      }
+      gradeSelect.innerHTML = optionsHtml;
+    }
+
+    if (addGradeBtn && gradeSelect) {
+      addGradeBtn.addEventListener('click', function() {
+        var name = gradeSelect.value;
+        addedOpt[curSem] = addedOpt[curSem] || [];
+        if (addedOpt[curSem].indexOf(name) === -1) {
+          addedOpt[curSem].push(name);
+          store.set('bp_opt', addedOpt);
+          renderNotas(); flashSave();
+        }
+      });
+    }
+
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', function() {
+        if (confirm("Deseja restaurar as disciplinas padrão do " + curPeriod + "º período? As matérias personalizadas adicionadas neste semestre serão removidas.")) {
+          delete addedOpt[curSem];
+          store.set('bp_opt', addedOpt);
+          renderNotas(); 
+          flashSave();
+        }
+      });
+    }
+  }
+
+  // Registra no carregamento
+  setTimeout(initIrregularGridControls, 500);
 
   /* ===== 13. AGENDA DE EVENTOS & HORAS COMPLEMENTARES ===== */
   function renderAgenda() { var wrap = document.getElementById('agenda-wrap'); if(!wrap) return; var today = new Date(); today.setHours(0, 0, 0, 0); var sorted = agenda.map(function (a, i) { return { a: a, i: i }; }).sort(function (x, y) { return (x.a.date || '').localeCompare(y.a.date || ''); }); var items = sorted.length ? sorted.map(function (o) { var a = o.a; var d = a.date ? new Date(a.date + 'T00:00:00') : null; var dias = d ? Math.round((d - today) / 86400000) : null; var sub = d ? (dias > 0 ? 'em ' + dias + ' dia(s)' : (dias === 0 ? 'hoje' : Math.abs(dias) + ' dia(s) atrás')) : ''; var dim = (dias !== null && dias < 0) ? 'opacity:.55;' : ''; return '<div class="titem" style="' + dim + '"><div><div class="ti-main">' + esc(a.title) + '</div><div class="ti-sub"><span class="ti-tag">' + esc(a.type) + '</span> · ' + esc(a.date || '') + (sub ? ' · ' + sub : '') + '</div></div><span class="ti-rm" data-rm="' + o.i + '">remover</span></div>'; }).join('') : '<div class="empty">Sem eventos de agenda.</div>'; wrap.innerHTML = '<div class="addrow"><input id="ag-date" type="date"><input class="grow" id="ag-title" placeholder="Título (ex: Exame Especial - Cálculo I)"><select id="ag-type"><option>Prova</option><option>Entrega</option><option>Evento</option><option>Reunião</option><option>Outro</option></select><input class="grow" id="ag-desc" placeholder="Breve descrição opcional"><button class="add" id="ag-add">Adicionar</button></div>' + items; }

@@ -862,3 +862,156 @@ body.theme-dark #blog-comment-form button[type="submit"] {
   border-color: rgba(127, 224, 188, 0.3) !important;
   box-shadow: 0 4px 14px rgba(15, 168, 119, 0.4) !important;
 }
+
+/* ESTILO DA FAIXA RETANGULAR DE AVISOS NA VISÃO GERAL */
+.aviso-banner-card {
+  background: var(--bg-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  border-left: 4px solid var(--emerald);
+  box-shadow: 0 4px 14px -6px rgba(10, 33, 29, 0.1);
+  transition: all 0.25s var(--ease);
+}
+.aviso-banner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -6px rgba(10, 33, 29, 0.18);
+  border-color: var(--emerald);
+}
+
+/* AJUSTE DE HOVER NOS BOTÕES VERDES E DIVISÓRIA EM DISPOSITIVOS MÓVEIS */
+#btn-add-grade-subj:hover,
+#opt-add:hover {
+  background: var(--emerald-d) !important;
+}
+
+#btn-restore-default-grid:hover {
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+}
+
+@media(max-width: 640px) {
+  .custom-grid-split {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .custom-grid-split > div:nth-child(2) {
+    width: 100% !important;
+    height: 1px !important;
+    min-height: 1px !important;
+  }
+}
+
+/* ========================================================
+   ESTILOS RESPONSIVOS DA CUSTOMIZAÇÃO DA GRADE (MOBILE SAFE)
+   ======================================================== */
+.custom-grid-split {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-grid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.custom-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-grid-divider {
+  background: var(--line-soft);
+  width: 1px;
+  height: 100%;
+  min-height: 40px;
+}
+
+.custom-add-btn {
+  background: var(--emerald);
+  color: #fff;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 9px 16px;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+  cursor: pointer;
+  border: none;
+  flex-shrink: 0;
+}
+
+.custom-add-btn:hover {
+  background: var(--emerald-d) !important;
+}
+
+.custom-grid-footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+#btn-restore-default-grid {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#btn-restore-default-grid:hover {
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+}
+
+/* REGRAS EXCLUSIVAS PARA TELAS MENORES (CELULARES) */
+@media (max-width: 640px) {
+  .custom-grid-split {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .custom-grid-divider {
+    width: 100% !important;
+    height: 1px !important;
+    min-height: 1px !important;
+    margin: 4px 0;
+  }
+
+  .custom-input-group {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .custom-add-btn {
+    width: 100% !important;
+    text-align: center !important;
+    padding: 10px !important;
+  }
+
+  .custom-grid-footer {
+    justify-content: center !important;
+  }
+
+  #btn-restore-default-grid {
+    width: 100% !important;
+    text-align: center !important;
+  }
+}
