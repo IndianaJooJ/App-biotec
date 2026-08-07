@@ -410,61 +410,123 @@
 </section>
 </div>
 
-<!-- ============ PÁGINA: BLOG DO ESTUDANTE ============ -->
+<!-- ============ PÁGINA: BIOBLOG CEFET-MG ============ -->
 <div class="page" id="page-blog">
 <section>
   <canvas class="biosoup" id="m-blog-canvas"></canvas>
   <div class="wrap">
     <div class="head compact reveal">
       <span class="idx">Comunidade &amp; Ciência</span>
-      <h2>Blog da Biotecnologia</h2>
-      <p class="lead">Espaço aberto para publicação de artigos, relatos de experiências, iniciação científica e notícias acadêmicas do curso de Biotecnologia do CEFET-MG.</p>
+      <h2>BioBlog CEFET-MG</h2>
+      <p class="lead">Espaço aberto para publicação de artigos, relatos de experiências, iniciação científica e notícias acadêmicas do curso de Biotecnologia.</p>
     </div>
 
-    <!-- Barra de Filtros e Botão para Abrir Formulário -->
-    <div class="period-selection-row reveal" style="margin-bottom: var(--s4);">
-      <div style="display:flex; align-items:center; justify-content:space-between; width:100%; flex-wrap:wrap; gap:12px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft)">Filtrar Categoria:</span>
-          <div class="period-chips-group" id="blog-filter-chips">
-            <button class="regua-chip on" data-blog-filter="todos">Todos</button>
-            <button class="regua-chip" data-blog-filter="Pesquisa">Pesquisa</button>
-            <button class="regua-chip" data-blog-filter="Carreira">Carreira</button>
-            <button class="regua-chip" data-blog-filter="Eventos">Eventos</button>
+    <!-- Sub-Navegação Interna do BioBlog -->
+    <div class="subnav reveal d1" id="blog-subnav" style="margin-bottom: var(--s4);">
+      <button class="on" data-blog-tab="feed">Mural de Artigos</button>
+      <button data-blog-tab="comofunciona">Como Funciona?</button>
+    </div>
+
+    <!-- SUB-ABA 1: FEED DE ARTIGOS E FORMULÁRIO -->
+    <div class="blog-tab-block on" id="blog-tab-feed">
+      <!-- Barra de Filtros e Botão com Maior Destaque Visual -->
+      <div class="period-selection-row reveal" style="margin-bottom: var(--s4);">
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft)">Filtrar Categoria:</span>
+            <div class="period-chips-group" id="blog-filter-chips">
+              <button class="regua-chip on" data-blog-filter="todos">Todos</button>
+              <button class="regua-chip" data-blog-filter="Pesquisa">Pesquisa</button>
+              <button class="regua-chip" data-blog-filter="Carreira">Carreira</button>
+              <button class="regua-chip" data-blog-filter="Eventos">Eventos</button>
+            </div>
           </div>
+          <!-- BOTÃO COM DESTAQUE VISUAL REFORÇADO -->
+          <button class="regua-adv-btn" id="btn-open-blog-form" style="background: var(--emerald); font-size:13px; padding:10px 20px; box-shadow: 0 4px 14px rgba(15,168,119,0.35);">+ Escrever Artigo</button>
         </div>
-        <button class="regua-adv-btn" id="btn-open-blog-form">+ Escrever Artigo</button>
+      </div>
+
+      <!-- Formulário de Envio -->
+      <div class="blog-form-box reveal" id="blog-form-box" style="display:none; margin-bottom: var(--s4); background: var(--bg-soft); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 24px;">
+        <h3 style="font-size:18px; font-weight:800; color:var(--ink); margin-bottom:16px;">Publicar Novo Artigo no BioBlog</h3>
+        <form id="blog-post-form" style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <input type="text" id="blog-input-autor" placeholder="Seu Nome / Autor" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px;">
+            <select id="blog-input-categoria" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px; font-weight:700;">
+              <option value="Pesquisa">Pesquisa &amp; Iniciação Científica</option>
+              <option value="Carreira">Carreira &amp; Mercado</option>
+              <option value="Eventos">Eventos &amp; Oportunidades</option>
+              <option value="Geral">Geral</option>
+            </select>
+          </div>
+          <input type="text" id="blog-input-titulo" placeholder="Título do Artigo" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13.5px; font-weight:700;">
+          <input type="text" id="blog-input-resumo" placeholder="Resumo curto (aparece no cartão do mural)" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px;">
+          <textarea id="blog-input-conteudo" placeholder="Escreva aqui o conteúdo completo do seu artigo..." required style="padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px; min-height:160px; resize:vertical;"></textarea>
+          
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" class="onboarding-btn sec" id="btn-cancel-blog-form">Cancelar</button>
+            <button type="submit" class="regua-adv-btn" id="btn-submit-blog">Publicar no BioBlog</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Feed de Artigos -->
+      <div class="blog-feed-container reveal" id="blog-feed-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;"></div>
+    </div>
+
+    <!-- SUB-ABA 2: COMO FUNCIONA (INFORMATIVO E GUIA) -->
+    <div class="blog-tab-block" id="blog-tab-comofunciona" style="display:none;">
+      <div class="ov-card reveal" style="line-height:1.7; font-size:14px; color:var(--ink-soft);">
+        <h3 style="font-size:18px; color:var(--ink); margin-bottom:12px;">Diretrizes e Funcionamento do BioBlog CEFET-MG</h3>
+        <p style="margin-bottom:12px;">O BioBlog é um mural comunitário aberto aos estudantes e professores para disseminação científica e cultural do curso de Biotecnologia.</p>
+        
+        <h4 style="font-size:15px; color:var(--ink); margin-top:16px; margin-bottom:8px;">1. Moderação Automática e Censura de Termos</h4>
+        <p style="margin-bottom:12px;">Todos os artigos e comentários passam por um algoritmo de varredura automática no banco de dados. Textos contendo palavras inadequadas, pornografia ou ofensas graves são bloqueados automaticamente na hora do envio.</p>
+
+        <h4 style="font-size:15px; color:var(--ink); margin-top:16px; margin-bottom:8px;">2. Permanência Pública dos Artigos</h4>
+        <p style="margin-bottom:12px;">As publicações aprovadas ficam registradas no banco de dados e são públicas para toda a comunidade do curso. Escreva com responsabilidade acadêmica.</p>
+
+        <h4 style="font-size:15px; color:var(--ink); margin-top:16px; margin-bottom:8px;">3. Solicitação de Remoção ou Exclusão de Publicação</h4>
+        <p style="margin-bottom:12px;">Caso necessite remover um artigo ou comentário publicado anteriormente, entre em contato direto com o <b>Representante de Turma</b> ou envie uma solicitação para a coordenação acadêmica para que a remoção seja efetuada no painel administrativo.</p>
       </div>
     </div>
 
-    <!-- Formulário de Envio de Artigo (Escondido por padrão) -->
-    <div class="blog-form-box reveal" id="blog-form-box" style="display:none; margin-bottom: var(--s4); background: var(--bg-soft); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 24px;">
-      <h3 style="font-size:18px; font-weight:800; color:var(--ink); margin-bottom:16px;">Publicar Novo Artigo</h3>
-      <form id="blog-post-form" style="display:flex; flex-direction:column; gap:14px;">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <input type="text" id="blog-input-autor" placeholder="Seu Nome / Autor" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px;">
-          <select id="blog-input-categoria" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px; font-weight:700;">
-            <option value="Pesquisa">Pesquisa &amp; Iniciação Científica</option>
-            <option value="Carreira">Carreira &amp; Mercado</option>
-            <option value="Eventos">Eventos &amp; Oportunidades</option>
-            <option value="Geral">Geral</option>
-          </select>
-        </div>
-        <input type="text" id="blog-input-titulo" placeholder="Título do Artigo" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13.5px; font-weight:700;">
-        <input type="text" id="blog-input-resumo" placeholder="Resumo curto (aparece no cartão)" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px;">
-        <textarea id="blog-input-conteudo" placeholder="Escreva aqui o conteúdo completo do seu artigo..." required style="padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px; min-height:160px; resize:vertical;"></textarea>
-        
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="button" class="onboarding-btn sec" id="btn-cancel-blog-form">Cancelar</button>
-          <button type="submit" class="regua-adv-btn" id="btn-submit-blog">Enviar para Aprovação</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Lista de Artigos Publicados -->
-    <div class="blog-feed-container reveal" id="blog-feed-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;"></div>
   </div>
 </section>
+</div>
+
+<!-- MODAL EXCLUSIVO E EXPANDIDO PARA LEITURA DE ARTIGOS DO BIOBLOG (MUITO MAIOR E COM COMENTÁRIOS) -->
+<div class="cal-modal-overlay" id="blog-reader-modal-overlay">
+  <div class="cal-modal" style="max-width: 760px; width: 92vw;">
+    <div class="cal-modal-header" id="blog-modal-header-bg" style="background: var(--petrol); padding:24px;">
+      <button class="cal-modal-close" id="blog-modal-close-btn" aria-label="Fechar modal">✕</button>
+      <span class="cal-modal-tag" id="blog-modal-category" style="background:rgba(255,255,255,0.2);">Categoria</span>
+      <h2 id="blog-modal-title" style="font-size:22px; font-weight:800; color:#fff; margin-top:6px;">Título do Artigo</h2>
+      <div style="font-size:12px; color:rgba(255,255,255,0.8); margin-top:8px;" id="blog-modal-author-date">Por: Autor · Data</div>
+    </div>
+    
+    <div class="cal-modal-body" style="padding:28px; max-height: 70vh; overflow-y: auto;">
+      <!-- Texto do Artigo -->
+      <div id="blog-modal-content-body" style="font-size:14.5px; line-height:1.75; color:var(--ink); border-bottom:1px solid var(--line-soft); padding-bottom:20px; margin-bottom:20px;"></div>
+
+      <!-- Seção de Comentários do Artigo -->
+      <div class="blog-comments-section">
+        <h4 style="font-size:15px; font-weight:800; color:var(--ink); margin-bottom:12px;">Comentários da Comunidade</h4>
+        
+        <!-- Feed de Comentários -->
+        <div id="blog-comments-feed" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
+
+        <!-- Formulário de Comentário -->
+        <form id="blog-comment-form" style="display:flex; flex-direction:column; gap:10px; background:var(--bg); padding:14px; border-radius:var(--radius); border:1px solid var(--line-soft);">
+          <input type="text" id="comment-input-autor" placeholder="Seu Nome" required style="padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); font-size:12.5px; background:var(--bg-soft); color:var(--ink);">
+          <textarea id="comment-input-text" placeholder="Escreva um comentário respeitoso..." required style="padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); font-size:12.5px; background:var(--bg-soft); color:var(--ink); min-height:60px; resize:vertical;"></textarea>
+          <div style="display:flex; justify-content:flex-end;">
+            <button type="submit" class="regua-adv-btn" style="padding:6px 14px; font-size:12px;">Comentar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ============ ESTRUTURA CURRICULAR OBRIGATÓRIA E OPTATIVAS (UNIFICADA COM ORDEM DO PDF) ============ -->
