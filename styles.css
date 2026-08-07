@@ -272,12 +272,13 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
 .subnav button{font-size:13px;font-weight:600;color:var(--ink-soft);padding:11px 16px;border-bottom:2px solid transparent;transition:.3s}
 .subnav button.on{color:var(--ink);border-bottom-color:var(--emerald)}
 
-/* CENTRALIZAÇÃO PADRÃO PARA TODAS AS SUB-ABAS DO PAINEL */
+/* CENTRALIZAÇÃO E ENCAPSULAMENTO DE TODAS AS SUB-ABAS DO PAINEL */
 .panel-block {
   display: none;
   max-width: 1140px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 .panel-block.on {
   display: block;
@@ -328,7 +329,7 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
   background:var(--petrol);
   color:#E8F2EE;
   border-radius:var(--radius);
-  padding:28px 32px;
+  padding:24px 28px;
   margin-bottom:var(--s4);
   position:relative;
   overflow:hidden;
@@ -336,6 +337,7 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+  box-sizing: border-box;
 }
 .integr .itop{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
 .integr h4{color:#fff;font-size:16px}
@@ -1027,26 +1029,70 @@ body.theme-dark #blog-comment-form button[type="submit"] {
   pointer-events: none;
 }
 
-/* ===== 13. PAINEL/NOTAS: INTEGRALIZAÇÃO (ALINHAMENTO FINO) ===== */
-.integr {
-  background: var(--petrol);
-  color: #E8F2EE;
-  border-radius: var(--radius);
-  padding: 24px 28px;
-  margin-bottom: var(--s4);
-  position: relative;
-  overflow: hidden;
-  max-width: 1080px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  box-sizing: border-box;
+/* ========================================================
+   CENTRALIZAÇÃO E UNIFICAÇÃO DE LARGURA DO PAINEL (1140px)
+   ======================================================== */
+#block-horarios,
+#block-prereqs,
+#block-complementares,
+#block-notas,
+#block-visao {
+  max-width: 1140px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
-.integr .itop{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
-.integr h4{color:#fff;font-size:16px}
-.integr .icount{font-family:var(--font);font-weight:700;font-size:15px;color:var(--lime)}
-.integr .isub{font-size:12.5px;color:rgba(232,242,238,.6);font-weight:400;margin:5px 0 18px}
-.ibar{height:8px;border-radius:100px;background:rgba(255,255,255,.1);overflow:hidden}
-.ibar .ifill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--emerald),var(--lime));width:0;transition:width .8s var(--ease)}
-.imeta{display:flex;gap:28px;margin-top:16px;flex-wrap:wrap;font-size:12.5px;color:rgba(232,242,238,.65)}
-.imeta b{font-family:var(--font);color:#fff;font-weight:700}
+
+/* Agenda de Eventos */
+#agenda-wrap {
+  max-width: 1140px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
+
+/* Tabela de Quadro de Horários */
+#sched-horarios {
+  max-width: 1140px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+  overflow-x: auto;
+}
+
+/* Grafo de Pré-requisitos e Planejador */
+.graph-wrap,
+.planner {
+  max-width: 1140px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
+
+/* Horas Complementares */
+#comp-wrap {
+  max-width: 1140px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
+
+/* Barra de Integralização do Curso */
+.integr {
+  max-width: 1140px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Réguas e Notas do Painel */
+.panel-block .note,
+.sched-controls-bar {
+  max-width: 1140px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
