@@ -901,6 +901,39 @@ document.addEventListener('DOMContentLoaded', function () {
     return pill;
   }
 
+/* ========================================================
+     TROCA DAS SUB-ABAS DE GRADE OBRIGATÓRIA / OPTATIVAS (v35)
+     ======================================================== */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-grade-tab]');
+    if (!btn) return;
+
+    var tabKey = btn.getAttribute('data-grade-tab'); // 'obrigatorias' ou 'optativas'
+
+    // Ativa o botão selecionado
+    document.querySelectorAll('button[data-grade-tab]').forEach(function (x) {
+      x.classList.toggle('on', x === btn);
+    });
+
+    // Mostra o bloco de conteúdo correspondente
+    var blockObr = document.getElementById('grade-tab-obrigatorias');
+    var blockOpt = document.getElementById('grade-tab-optativas');
+
+    if (blockObr && blockOpt) {
+      if (tabKey === 'optativas') {
+        blockObr.classList.remove('on');
+        blockObr.style.display = 'none';
+        blockOpt.classList.add('on');
+        blockOpt.style.display = 'block';
+      } else {
+        blockOpt.classList.remove('on');
+        blockOpt.style.display = 'none';
+        blockObr.classList.add('on');
+        blockObr.style.display = 'block';
+      }
+    }
+  });
+
   /* MODAL DE EVENTOS GLOBAL */
   var modalOverlay = document.getElementById('cal-event-modal-overlay');
   var closeBtn = document.getElementById('cal-modal-close-btn');
