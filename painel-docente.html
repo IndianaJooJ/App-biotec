@@ -16,6 +16,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      overflow-x: hidden;
     }
 
     .admin-container {
@@ -27,6 +29,8 @@
       border: 1px solid var(--line-soft);
       border-radius: var(--radius);
       box-shadow: 0 12px 40px -15px rgba(10,33,29,0.15);
+      position: relative;
+      z-index: 2;
     }
 
     .form-grid {
@@ -73,24 +77,66 @@
       resize: vertical;
     }
 
+    /* BOTÃO DE PUBLICAÇÃO DINÂMICO (IGUAL AO DO BIOBLOG) */
     .btn-submit {
-      background: linear-gradient(135deg, #0FA877 0%, #7FE0BC 100%);
-      color: #06201C;
-      font-weight: 800;
-      padding: 14px 24px;
-      border-radius: var(--radius);
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s ease;
+      background: linear-gradient(135deg, #7FE0BC 0%, #C2EE73 100%) !important;
+      color: #0C302B !important;
+      font-family: var(--font) !important;
+      font-size: 13.5px !important;
+      font-weight: 800 !important;
+      padding: 14px 24px !important;
+      border-radius: var(--radius) !important;
+      border: 0px solid rgba(127, 224, 188, 0.4) !important;
+      box-shadow: 0 4px 14px rgba(127, 224, 188, 0.35) !important;
+      transition: all 0.25s var(--ease) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      cursor: pointer !important;
       margin-top: 12px;
       width: 100%;
       text-align: center;
     }
 
     .btn-submit:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(15, 168, 119, 0.35);
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 18px rgba(194, 238, 115, 0.5) !important;
+      filter: brightness(1.03) !important;
+    }
+
+    .btn-submit:active {
+      transform: translateY(0) scale(0.98) !important;
+    }
+
+    /* TEMA ESCURO DO BOTÃO DE PUBLICAÇÃO */
+    body.theme-dark .btn-submit {
+      background: linear-gradient(135deg, #0FA877 0%, #7FE0BC 100%) !important;
+      color: #06201C !important;
+      border-color: rgba(127, 224, 188, 0.3) !important;
+      box-shadow: 0 4px 14px rgba(15, 168, 119, 0.4) !important;
+    }
+
+    /* Estilização do link de voltar como botão circular no FAB */
+    .tools-menu a.fab-circle-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--navbg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--line-soft);
+      color: var(--ink-soft);
+      box-shadow: 0 10px 30px -16px rgba(10,33,29,.45);
+      transition: .3s var(--ease);
+      text-decoration: none;
+    }
+
+    .tools-menu a.fab-circle-btn:hover {
+      color: var(--ink);
+      border-color: var(--line);
+      transform: translateY(-1px);
     }
 
     /* Modal de Senha Integrado Responsivo */
@@ -142,7 +188,6 @@
       font-size: 13px;
     }
 
-    /* REGRAS EXCLUSIVAS PARA DISPOSITIVOS MÓVEIS (CELULARES) */
     @media (max-width: 640px) {
       body {
         padding: 8px;
@@ -170,6 +215,9 @@
   </style>
 </head>
 <body>
+  <!-- CANVAS DE PARTÍCULAS DE FUNDO -->
+  <canvas class="biosoup" id="docente-particles-canvas"></canvas>
+
   <div class="admin-container">
     <div style="margin-bottom: 20px; border-bottom: 1px solid var(--line-soft); padding-bottom: 14px;">
       <span class="idx">Acesso Restrito · Corpo Docente & Colegiado</span>
@@ -232,6 +280,21 @@
     </form>
   </div>
 
+  <!-- MENU FLUTUANTE DE 3 PONTINHOS (FAB) -->
+  <div class="tools" id="tools">
+    <div class="tools-menu" id="tools-menu">
+      <!-- Botão Voltar para o App Principal -->
+      <a href="index.html" class="fab-circle-btn" id="fab-home" title="Ir para o BioPulse" aria-label="Ir para o BioPulse">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      </a>
+      <!-- Botão Alternar Tema Claro/Escuro -->
+      <button id="fab-theme" title="Alternar tema" aria-label="Alternar tema">
+        <svg id="theme-ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+    <button class="tools-toggle" id="tools-toggle" title="Ferramentas" aria-label="Ferramentas"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></button>
+  </div>
+
   <!-- MODAL INTEGRADO DE AUTENTICAÇÃO -->
   <div class="senha-modal-overlay" id="modal-senha-overlay">
     <div class="senha-modal-box">
@@ -250,14 +313,58 @@
     </div>
   </div>
 
-  <!-- IMPORTAÇÃO DO SDK DO SUPABASE -->
+  <!-- IMPORTAÇÃO DE SCRIPTS DO SISTEMA -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="particles.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      // 1. Inicializa o Fundo de Partículas
+      if (window.BP_PARTICLES && typeof window.BP_PARTICLES.init === 'function') {
+        window.BP_PARTICLES.init(document.getElementById('docente-particles-canvas'), { mode: 'mol' });
+      }
+
+      // 2. Controle do Tema Claro / Escuro
+      var theme = localStorage.getItem('bp_theme') ? JSON.parse(localStorage.getItem('bp_theme')) : 'light';
+      function applyTheme(t) {
+        document.body.classList.toggle('theme-dark', t === 'dark');
+        var ico = document.getElementById('theme-ico');
+        if (ico) {
+          if (t === 'dark') {
+            ico.innerHTML = '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" fill="currentColor" stroke="none"/>';
+          } else {
+            ico.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" stroke-linecap="round"/>';
+          }
+        }
+      }
+      applyTheme(theme);
+
+      var fabTheme = document.getElementById('fab-theme');
+      if (fabTheme) {
+        fabTheme.addEventListener('click', function (e) {
+          e.stopPropagation();
+          theme = (theme === 'dark' ? 'light' : 'dark');
+          localStorage.setItem('bp_theme', JSON.stringify(theme));
+          applyTheme(theme);
+        });
+      }
+
+      // 3. Controle do Menu Flutuante (FAB)
+      var tools = document.getElementById('tools');
+      var toolsToggle = document.getElementById('tools-toggle');
+      if (toolsToggle && tools) {
+        toolsToggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          tools.classList.toggle('open');
+        });
+      }
+      document.addEventListener('click', function (e) {
+        if (tools && !tools.contains(e.target)) tools.classList.remove('open');
+      });
+
+      // 4. Lógica do Formulário e Supabase
       const SUPABASE_URL = "https://bhalzllmozefvbytcghh.supabase.co";
       const SUPABASE_KEY = "sb_publishable_NftyZFwgxOi9x4XPxsalaw_uLCBeEeF";
-      
       const SENHA_CORRETA = "1923";
 
       // Datas padrão
@@ -272,7 +379,6 @@
       const btnConfirmar = document.getElementById('btn-confirmar-publicacao');
       const inputSenha = document.getElementById('input-senha-mestra');
 
-      // 1. Clique no botão de enviar no formulário
       btnAbrirModal.addEventListener('click', function () {
         const titulo = document.getElementById('aviso-titulo').value.trim();
         const autor = document.getElementById('aviso-autor').value.trim();
@@ -288,19 +394,16 @@
         inputSenha.focus();
       });
 
-      // Tecla Enter no campo de senha
       inputSenha.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           btnConfirmar.click();
         }
       });
 
-      // 2. Fechar modal
       btnCancelar.addEventListener('click', function () {
         modal.classList.remove('open');
       });
 
-      // 3. Confirmar publicação
       btnConfirmar.addEventListener('click', async function () {
         const senhaDigitada = inputSenha.value.trim();
 
@@ -344,7 +447,7 @@
           document.getElementById('aviso-data-fim').value = nextWeek;
         } catch (err) {
           console.error("Erro Supabase:", err);
-          alert("Erro ao publicar no banco de dados. Verifique se a tabela 'avisos' foi criada no Supabase.");
+          alert("Erro ao publicar no banco de dados. Verifique a tabela 'avisos' no Supabase.");
         } finally {
           btnAbrirModal.disabled = false;
           btnAbrirModal.textContent = "Publicar Aviso Oficial";
