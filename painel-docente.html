@@ -1,0 +1,177 @@
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BioPulse — Gestão de Avisos do Curso</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-container {
+      max-width: 680px;
+      margin: 40px auto;
+      padding: 32px;
+      background: var(--bg-soft);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px -15px rgba(10,33,29,0.15);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .full-width {
+      grid-column: 1 / -1;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-soft);
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 13px;
+      font-family: var(--font);
+    }
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, #0FA877 0%, #7FE0BC 100%);
+      color: #06201C;
+      font-weight: 800;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      margin-top: 12px;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(15, 168, 119, 0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div style="margin-bottom: 24px; border-bottom: 1px solid var(--line-soft); padding-bottom: 16px;">
+      <span class="idx">Acesso Restrito · Corpo Docente & Colegiado</span>
+      <h2 style="font-size: 22px; color: var(--ink);">Publicar Aviso no BioPulse</h2>
+      <p style="font-size: 13px; color: var(--ink-soft); margin-top: 4px;">
+        Os avisos cadastrados nesta página serão exibidos imediatamente no aplicativo dos alunos conforme o período de exibição selecionado.
+      </p>
+    </div>
+
+    <form id="form-publicar-aviso" class="form-grid">
+      <div class="form-group full-width">
+        <label for="aviso-titulo">Título do Aviso</label>
+        <input type="text" id="aviso-titulo" placeholder="Ex: Alteração de Sala - Química Teórica" required>
+      </div>
+
+      <div class="form-group">
+        <label for="aviso-autor">Autor / Emissor</label>
+        <input type="text" id="aviso-autor" placeholder="Ex: Prof. Claudinei Calado / Colegiado" required>
+      </div>
+
+      <div class="form-group">
+        <label for="aviso-categoria">Categoria</label>
+        <select id="aviso-categoria" required>
+          <option value="Colegiado">Colegiado de Curso</option>
+          <option value="DEBIO">Departamento DEBIO</option>
+          <option value="DEQUI">Departamento DEQUI</option>
+          <option value="DECOM">Departamento DECOM</option>
+          <option value="Diretoria">Diretoria / Geral</option>
+          <option value="Representantação">Representância de Turma</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="aviso-nivel">Nível de Prioridade</label>
+        <select id="aviso-nivel" required>
+          <option value="comum">Comum (Informativo Geral)</option>
+          <option value="atencao">Atenção (Prazos e Alertas)</option>
+          <option value="critico">Crítico (Mudanças Urgentes de Sala/Data)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="aviso-data-inicio">Data de Início (Gatilho de Exibição)</label>
+        <input type="date" id="aviso-data-inicio" required>
+      </div>
+
+      <div class="form-group">
+        <label for="aviso-data-fim">Data de Término (Expiração do Aviso)</label>
+        <input type="date" id="aviso-data-fim" required>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="aviso-mensagem">Mensagem / Detalhes</label>
+        <textarea id="aviso-mensagem" placeholder="Digite o conteúdo detalhado do comunicado..." required></textarea>
+      </div>
+
+      <div class="full-width" style="display: flex; justify-content: flex-end;">
+        <button type="submit" class="btn-submit" id="btn-enviar-aviso">Publicar Aviso Oficial</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://bhalzllmozefvbytcghh.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_NftyZFwgxOi9x4XPxsalaw_uLCBeEeF";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Preenche as datas padrão (hoje até 7 dias depois)
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    document.getElementById('aviso-data-inicio').value = today;
+    document.getElementById('aviso-data-fim').value = nextWeek;
+
+    document.getElementById('form-publicar-aviso').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-enviar-aviso');
+      btn.disabled = true;
+      btn.textContent = "Publicando...";
+
+      const aviso = {
+        titulo: document.getElementById('aviso-titulo').value.trim(),
+        autor: document.getElementById('aviso-autor').value.trim(),
+        categoria: document.getElementById('aviso-categoria').value,
+        nivel: document.getElementById('aviso-nivel').value,
+        data_inicio: document.getElementById('aviso-data-inicio').value,
+        data_fim: document.getElementById('aviso-data-fim').value,
+        mensagem: document.getElementById('aviso-mensagem').value.trim(),
+        status: 'aprovado'
+      };
+
+      try {
+        const { error } = await supabaseClient.from('avisos').insert([aviso]);
+        if (error) throw error;
+        alert("Aviso cadastrado e publicado com sucesso no BioPulse!");
+        document.getElementById('form-publicar-aviso').reset();
+        document.getElementById('aviso-data-inicio').value = today;
+        document.getElementById('aviso-data-fim').value = nextWeek;
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao publicar o aviso. Verifique a conexão.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Publicar Aviso Oficial";
+      }
+    });
+  </script>
+</body>
+</html>

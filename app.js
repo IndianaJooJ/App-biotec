@@ -979,13 +979,16 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ===== 13. PAINEL VISÃO GERAL INTEGRADO E DINÂMICO ===== */
-  function renderVisaoAvisosBanner() {
+async function renderVisaoAvisosBanner() {
     var banner = document.getElementById('vg-aviso-banner');
     var titleElem = document.getElementById('vg-aviso-title');
     var pillElem = document.getElementById('vg-aviso-pill');
     if (!banner || !titleElem) return;
 
-    var list = (window.BP_AVISOS && window.BP_AVISOS.AVISOS_DB) ? window.BP_AVISOS.AVISOS_DB : [];
+    var list = (window.BP_AVISOS && typeof window.BP_AVISOS.getLoadedAvisos === 'function') 
+      ? window.BP_AVISOS.getLoadedAvisos() 
+      : [];
+
     if (!list.length) {
       banner.style.display = 'none';
       return;
@@ -993,7 +996,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var latestAviso = list[0];
     banner.style.display = 'block';
-    titleElem.textContent = ' ' + latestAviso.titulo + ' (' + latestAviso.data + ')';
+    titleElem.textContent = ' ' + latestAviso.titulo + ' (' + latestAviso.data_inicio + ')';
     
     if (pillElem) {
       pillElem.textContent = latestAviso.nivel === 'critico' ? 'Aviso Crítico' : (latestAviso.nivel === 'atencao' ? 'Atenção' : 'Aviso');
