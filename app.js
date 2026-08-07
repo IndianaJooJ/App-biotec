@@ -94,6 +94,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+/* Inicializa as partículas de fundo dos canvas das novas abas */
+  P.init(document.getElementById('m-grade-canvas'), { mode: 'mol' });
+  P.init(document.getElementById('m-avisos-canvas'), { mode: 'soup' });
+  P.init(document.getElementById('m-blog-canvas'), { mode: 'mol' }); // CANVAS DO BLOG
+
   var tools = document.getElementById('tools');
   var toolsToggle = document.getElementById('tools-toggle');
   if (toolsToggle) {

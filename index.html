@@ -40,6 +40,7 @@
   <button class="lnk" data-page="painel">Painel</button>
   <button class="lnk" data-page="avisos">Avisos</button>
   <button class="lnk" data-page="calendario">Calendário</button>
+  <button class="lnk" data-page="blog">Blog</button> <!-- NOVO BOTÃO BLOG -->
   <button class="lnk" data-page="grade">Grade &amp; Optativas</button>
   <button class="theme-tg" id="theme-tg" title="Alternar tema" aria-label="Alternar tema">
     <svg id="theme-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" stroke-linecap="round"></path></svg>
@@ -405,6 +406,63 @@
 
     <!-- Feed de Avisos -->
     <div class="avisos-feed-container reveal" id="avisos-feed-container" style="display: flex; flex-direction: column; gap: 16px;"></div>
+  </div>
+</section>
+</div>
+
+<!-- ============ PÁGINA: BLOG DO ESTUDANTE ============ -->
+<div class="page" id="page-blog">
+<section>
+  <canvas class="biosoup" id="m-blog-canvas"></canvas>
+  <div class="wrap">
+    <div class="head compact reveal">
+      <span class="idx">Comunidade &amp; Ciência</span>
+      <h2>Blog da Biotecnologia</h2>
+      <p class="lead">Espaço aberto para publicação de artigos, relatos de experiências, iniciação científica e notícias acadêmicas do curso de Biotecnologia do CEFET-MG.</p>
+    </div>
+
+    <!-- Barra de Filtros e Botão para Abrir Formulário -->
+    <div class="period-selection-row reveal" style="margin-bottom: var(--s4);">
+      <div style="display:flex; align-items:center; justify-content:space-between; width:100%; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft)">Filtrar Categoria:</span>
+          <div class="period-chips-group" id="blog-filter-chips">
+            <button class="regua-chip on" data-blog-filter="todos">Todos</button>
+            <button class="regua-chip" data-blog-filter="Pesquisa">Pesquisa</button>
+            <button class="regua-chip" data-blog-filter="Carreira">Carreira</button>
+            <button class="regua-chip" data-blog-filter="Eventos">Eventos</button>
+          </div>
+        </div>
+        <button class="regua-adv-btn" id="btn-open-blog-form">+ Escrever Artigo</button>
+      </div>
+    </div>
+
+    <!-- Formulário de Envio de Artigo (Escondido por padrão) -->
+    <div class="blog-form-box reveal" id="blog-form-box" style="display:none; margin-bottom: var(--s4); background: var(--bg-soft); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 24px;">
+      <h3 style="font-size:18px; font-weight:800; color:var(--ink); margin-bottom:16px;">Publicar Novo Artigo</h3>
+      <form id="blog-post-form" style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <input type="text" id="blog-input-autor" placeholder="Seu Nome / Autor" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px;">
+          <select id="blog-input-categoria" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px; font-weight:700;">
+            <option value="Pesquisa">Pesquisa &amp; Iniciação Científica</option>
+            <option value="Carreira">Carreira &amp; Mercado</option>
+            <option value="Eventos">Eventos &amp; Oportunidades</option>
+            <option value="Geral">Geral</option>
+          </select>
+        </div>
+        <input type="text" id="blog-input-titulo" placeholder="Título do Artigo" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13.5px; font-weight:700;">
+        <input type="text" id="blog-input-resumo" placeholder="Resumo curto (aparece no cartão)" required style="padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px;">
+        <textarea id="blog-input-conteudo" placeholder="Escreva aqui o conteúdo completo do seu artigo..." required style="padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px; min-height:160px; resize:vertical;"></textarea>
+        
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="onboarding-btn sec" id="btn-cancel-blog-form">Cancelar</button>
+          <button type="submit" class="regua-adv-btn" id="btn-submit-blog">Enviar para Aprovação</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Lista de Artigos Publicados -->
+    <div class="blog-feed-container reveal" id="blog-feed-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;"></div>
   </div>
 </section>
 </div>
@@ -992,9 +1050,11 @@
 </footer>
 
 <!-- ============ SCRIPTS — ORDEM OBRIGATÓRIA ============ -->
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- SDK SUPABASE -->
 <script src="data.js"></script>
 <script src="particles.js"></script>
 <script src="avisos.js"></script> <!-- NOVO ARQUIVO DE AVISOS -->
+<script src="blog.js"></script> <!-- MODULO DO BLOG -->
 <script src="app.js"></script>
 
 </body></html>
