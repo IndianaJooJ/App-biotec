@@ -1,3 +1,218 @@
+/* ===== RASTREADOR AVANÇADO DE EVENTOS (GA4 + Vercel Insights) ===== */
+  window.trackEvent = function (eventName, eventParams) {
+    eventParams = eventParams || {};
+    
+    // 1. Envia para o Google Analytics 4 (gtag.js)
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', eventName, eventParams);
+    }
+    
+    // 2. Envia para o Vercel Analytics (va)
+    if (typeof window.va === 'function') {
+      window.va('event', { name: eventName, data: eventParams });
+    }
+  };
+
+  // Monitora a troca de abas (Páginas Virtuais)
+  links.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var p = b.getAttribute('data-page');
+      
+      // Dispara visualização de página virtual no GA4 e Vercel
+      trackEvent('page_view_custom', {
+        page_title: 'BioPulse — ' + p.toUpperCase(),
+        page_location: window.location.href + '#' + p,
+        page_path: '/' + p
+      });
+
+      links.forEach(function (x) { x.classList.toggle('active', x === b); });
+      pages.forEach(function (pg) { pg.classList.toggle('on', pg.id === 'page-' + p); });
+      scrollTo({ top: 0, behavior: 'smooth' });
+      observeReveals();
+      setTimeout(function () {
+        P.resizeAll();
+        if (p === 'painel') renderVisao();
+        if (p === 'calendario') renderCalendario();
+      }, 90);
+    });
+  });
+
+  // Rastreia alteração de faltas
+  var f = target.closest('button[data-f]');
+  if (f) {
+    var k2 = f.getAttribute('data-f'), d = parseInt(f.getAttribute('data-d'), 10);
+    faltas[k2] = Math.max(0, (faltas[k2] || 0) + d);
+    store.set('bp_faltas', faltas);
+    
+    // Evento de rastreamento
+    trackEvent('alterar_faltas', { materia_key: k2, direcao: d > 0 ? 'incremento' : 'decremento' });
+    
+    renderNotas(); renderVisao(); flashSave(); return;
+  }
+
+  // Rastreia onboarding / tutorial
+  function openOnboarding() {
+    currentSlide = 1;
+    updateSlideDisplay();
+    if (onboardingOverlay) onboardingOverlay.classList.add('open');
+    trackEvent('onboarding_aberto', { categoria: 'Engajamento' });
+  }
+
+  /* ===== 1. ALTERNAR TEMA (CLARO/ESCURO) ===== */
+  var themeTg = document.getElementById('theme-tg');
+  if (themeTg) {
+    themeTg.addEventListener('click', function () {
+      theme = (theme === 'dark' ? 'light' : 'dark');
+      store.set('bp_theme', theme);
+      applyTheme(theme);
+      
+      // EVENTO 1: Alternar Tema
+      trackEvent('alternar_tema', { tema: theme });
+    });
+  }
+
+  /* ===== 2. SELEÇÃO DE PERÍODO NO PAINEL ===== */
+  function setPeriod(p) {
+    curPeriod = p;
+    store.set('bp_curperiod', curPeriod);
+    curSem = String(curPeriod);
+    buildPeriodMenu();
+    renderNotas();
+    renderVisao();
+    renderHorarios();
+    flashSave();
+
+    // EVENTO 2: Troca de Período
+    trackEvent('trocar_periodo_painel', { periodo_selecionado: p });
+  }
+
+  /* ===== 3 & 4. ADICIONAR E EXCLUIR AVALIAÇÃO DE DISCIPLINA ===== */
+  // Dentro do EventListener do gradeListContainer:
+  if (target.classList.contains('ev-btn-add')) {
+    var form = target.closest('.eval-add');
+    var k3 = form.getAttribute('data-k');
+    var nome = form.querySelector('.add-nome').value || 'Avaliação';
+    var data = form.querySelector('.add-data').value || '';
+    var notaVal = form.querySelector('.add-nota').value;
+    if (notaVal === '' || isNaN(parseFloat(notaVal))) return;
+    
+    evals[k3] = evals[k3] || [];
+    evals[k3].push({ nome: nome, data: data, nota: Math.max(0, Math.min(100, parseFloat(notaVal))) });
+    store.set('bp_evals', evals);
+    
+    // EVENTO 3: Adicionar Avaliação
+    trackEvent('adicionar_avaliacao', { materia_key: k3, nota: notaVal, nome_eval: nome });
+
+    renderNotas(); renderVisao(); flashSave(); return;
+  }
+
+  var xr = target.closest('.ev-x');
+  if (xr) { 
+    var dataVal = xr.getAttribute('data-evx'); 
+    var parts = dataVal.split('|'); 
+    var key = parts[0] + '|' + parts[1]; 
+    var index = parseInt(parts[2], 10); 
+    if (evals[key]) { 
+      evals[key].splice(index, 1); 
+      store.set('bp_evals', evals); 
+
+      // EVENTO 4: Excluir Avaliação
+      trackEvent('excluir_avaliacao', { materia_key: key });
+
+      renderNotas(); renderVisao(); 
+    } 
+    return; 
+  }
+
+  /* ===== 5, 6 & 7. GESTÃO DE MATÉRIAS DA GRADE (ADIÇÃO, REMOÇÃO E RESTAURAÇÃO) ===== */
+  // Na função tentarAdicionarMateria():
+  addedOpt[curSem] = addedOpt[curSem] || [];
+  if (addedOpt[curSem].indexOf(nomeMateria) === -1) {
+    addedOpt[curSem].push(nomeMateria);
+    store.set('bp_opt', addedOpt);
+
+    // EVENTO 5: Adicionar Matéria Customizada ou Optativa
+    trackEvent('adicionar_materia_custom', { materia_nome: nomeMateria, periodo: curSem });
+  }
+
+  // No evento de remoção de matéria da grade:
+  if (rmBtn) {
+    // ... código de exclusão ...
+    store.set('bp_faltas', faltas); store.set('bp_notes', notes); store.set('bp_evals', evals);
+    
+    // EVENTO 6: Remover Matéria da Grade
+    trackEvent('remover_materia_grade', { materia_nome: name, periodo: curSem });
+
+    renderNotas(); renderVisao(); flashSave(); return;
+  }
+
+  // No evento do botão restaurar grade padrão:
+  if (restoreBtn) {
+    restoreBtn.addEventListener('click', function() {
+      if (confirm('Deseja restaurar a grade padrão do ' + curPeriod + 'º período?')) {
+        delete addedOpt[curSem];
+        delete removedSubjs[curSem];
+        store.set('bp_opt', addedOpt);
+        store.set('bp_removed', removedSubjs);
+
+        // EVENTO 7: Restaurar Grade Padrão
+        trackEvent('restaurar_grade_padrao', { periodo: curSem });
+
+        renderNotas(); renderVisao(); flashSave();
+      }
+    });
+  }
+
+  /* ===== 8. INTERAÇÃO NO GRAFO DE PRÉ-REQUISITOS ===== */
+  function selectGraph(id) {
+    gselected = id;
+    applyGraphSel();
+    var nd = nodeOf(id);
+    var rel = relatives(id);
+    // ... preenchimento do painel lateral ...
+
+    // EVENTO 8: Seleção no Grafo de Pré-requisitos
+    if (nd) {
+      trackEvent('selecionar_no_grafo', { materia_id: id, materia_nome: nd.n, periodo: nd.p });
+    }
+  }
+
+  /* ===== 9. PLANEJADOR ARRASTÁVEL (DRAG & DROP DE OPTATIVAS) ===== */
+  // Na função attachDnD():
+  col.addEventListener('drop', function (e) {
+    e.preventDefault();
+    col.classList.remove('over');
+    if (dragId === null) return;
+    var targetP = parseInt(col.getAttribute('data-p'), 10);
+    plan[dragId] = targetP;
+    store.set('bp_plan', plan);
+
+    // EVENTO 9: Arrastar Optativa no Planejador
+    trackEvent('arrastar_optativa_planejador', { optativa_id: dragId, periodo_destino: targetP });
+
+    dragId = null;
+    renderPlanner();
+    flashSave();
+  });
+
+  /* ===== 10. ADICIONAR COMPROMISSO NA AGENDA PESSOAL ===== */
+  // No manipulador de eventos da agenda (#ag-add):
+  if (a) {
+    var date = document.getElementById('ag-date').value;
+    var title = document.getElementById('ag-title').value;
+    var type = document.getElementById('ag-type').value;
+    var desc = document.getElementById('ag-desc').value;
+    if (!title) { alert('Por favor, informe o título do evento.'); return; }
+    
+    agenda.push({ date: date, title: title, type: type, desc: desc });
+    store.set('bp_agenda', agenda);
+
+    // EVENTO 10: Adicionar Compromisso na Agenda
+    trackEvent('adicionar_evento_agenda', { titulo_evento: title, tipo: type, data_evento: date });
+
+    renderAgenda(); renderVisao(); flashSave(); return;
+  }
+
 /* ============================================================
    APP.JS — Lógica do BioPulse (Painel de Formação em Biotecnologia)
    

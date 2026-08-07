@@ -1,3 +1,15 @@
+// Rastreia abertura de artigos no BioBlog
+  function openPostModal(id) {
+    var posts = window._currentBlogPosts || [];
+    var post = posts.find(function (p) { return p.id === id; });
+    if (!post) return;
+
+    if (typeof window.trackEvent === 'function') {
+      window.trackEvent('ler_artigo_blog', { post_id: id, titulo: post.titulo, categoria: post.categoria });
+    }
+    // ... restante da função openPostModal
+  }
+
 /* ============================================================
    blog.js — BioBlog CEFET-MG (Modal Exclusivo + Comentários + Polling 10s)
    ============================================================ */
