@@ -24,10 +24,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   "use strict";
 
-  import { injectSpeedInsights } from '@vercel/speed-insights';
-
-injectSpeedInsights();
-
   /* ===== 01. PONTES COM MÓDULOS EXTERNOS & STORE ===== */
   var D = window.BP_DATA || {};
   var P = window.BP_PARTICLES || { init: function () {}, resizeAll: function () {}, buildDNA: function () {} };
