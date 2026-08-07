@@ -1,5 +1,5 @@
 /* ============================================================
-   blog.js — BioBlog CEFET-MG (Modal Exclusivo + Comentários + Suporte a Datas)
+   blog.js — BioBlog CEFET-MG (Modal Exclusivo + Comentários + Polling 10s)
    ============================================================ */
 window.BP_BLOG = (function () {
   "use strict";
@@ -10,6 +10,7 @@ window.BP_BLOG = (function () {
   var supabaseClient = null;
   var currentFilter = 'todos';
   var activePostIdForComments = null;
+  var autoRefreshTimer = null;
 
   function initSupabase() {
     if (window.supabase && typeof window.supabase.createClient === 'function') {
@@ -21,7 +22,6 @@ window.BP_BLOG = (function () {
     return ('' + (s == null ? '' : s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  /* Formatação confiável de datas sem Invalid Date */
   function formatDateBR(dateStr) {
     if (!dateStr) return '—';
     var d = new Date(dateStr);
@@ -48,6 +48,8 @@ window.BP_BLOG = (function () {
 
       if (error) throw error;
 
+      window._currentBlogPosts = posts || [];
+
       var filtered = (posts || []).filter(function (p) {
         if (currentFilter === 'todos') return true;
         return p.categoria === currentFilter;
@@ -58,7 +60,7 @@ window.BP_BLOG = (function () {
         return;
       }
 
-var html = filtered.map(function (p) {
+      var html = filtered.map(function (p) {
         return '<div class="aviso-card comum" onclick="window.BP_BLOG.openPostModal(' + p.id + ')" style="display:flex; flex-direction:column; justify-space-between; height:100%; cursor:pointer;">' +
           '<div>' +
             '<div class="aviso-card-header" style="margin-bottom:8px;">' +
@@ -76,7 +78,6 @@ var html = filtered.map(function (p) {
       }).join('');
 
       container.innerHTML = html;
-      window._currentBlogPosts = posts;
     } catch (err) {
       console.error(err);
       container.innerHTML = '<div class="empty">Erro ao carregar os artigos do BioBlog.</div>';
@@ -107,7 +108,8 @@ var html = filtered.map(function (p) {
       alert("Artigo publicado com sucesso no BioBlog CEFET-MG!");
       document.getElementById('blog-post-form').reset();
       document.getElementById('blog-form-box').style.display = 'none';
-      fetchAndRenderPosts();
+
+      await fetchAndRenderPosts();
     } catch (err) {
       alert("Erro ao publicar o artigo. O texto pode conter palavras bloqueadas pelas diretrizes.");
       console.error(err);
@@ -116,7 +118,7 @@ var html = filtered.map(function (p) {
     }
   }
 
-  /* Modal de Leitura do BioBlog Exclusivo e Maior */
+  /* Modal de Leitura */
   function openPostModal(id) {
     var posts = window._currentBlogPosts || [];
     var post = posts.find(function (p) { return p.id === id; });
@@ -161,7 +163,7 @@ var html = filtered.map(function (p) {
 
       feed.innerHTML = comments.map(function (c) {
         return '<div style="background:var(--bg-soft); padding:10px 12px; border-radius:var(--radius); border:1px solid var(--line-soft); font-size:12.5px;">' +
-          '<div style="display:flex; justify-space-between; margin-bottom:4px;">' +
+          '<div style="display:flex; justify-content:space-between; margin-bottom:4px;">' +
             '<b style="color:var(--ink);">' + esc(c.autor) + '</b>' +
             '<span style="font-size:10.5px; color:var(--ink-soft);">' + formatDateBR(c.created_at) + '</span>' +
           '</div>' +
@@ -192,10 +194,32 @@ var html = filtered.map(function (p) {
       if (error) throw error;
 
       document.getElementById('comment-input-text').value = '';
-      fetchAndRenderComments(activePostIdForComments);
+      await fetchAndRenderComments(activePostIdForComments);
     } catch (err) {
       alert("Erro ao publicar comentário. Evite palavras inadequadas.");
       console.error(err);
+    }
+  }
+
+  /* SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA (POLLING A CADA 10s) */
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    autoRefreshTimer = setInterval(function () {
+      var blogPage = document.getElementById('page-blog');
+      // Atualiza apenas se o usuário estiver navegando na página do blog
+      if (blogPage && blogPage.classList.contains('on')) {
+        fetchAndRenderPosts();
+        if (activePostIdForComments) {
+          fetchAndRenderComments(activePostIdForComments);
+        }
+      }
+    }, 10000); // 10.000 ms = 10 segundos
+  }
+
+  function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+      clearInterval(autoRefreshTimer);
+      autoRefreshTimer = null;
     }
   }
 
@@ -235,7 +259,6 @@ var html = filtered.map(function (p) {
       });
     }
 
-    /* Sub-abas do BioBlog (Feed / Como Funciona) */
     if (blogSubnav) {
       blogSubnav.addEventListener('click', function (e) {
         var btn = e.target.closest('button[data-blog-tab]');
@@ -262,8 +285,16 @@ var html = filtered.map(function (p) {
     }
 
     if (readerCloseBtn && readerOverlay) {
-      readerCloseBtn.addEventListener('click', function () { readerOverlay.style.display = 'none'; });
-      readerOverlay.addEventListener('click', function (e) { if (e.target === readerOverlay) readerOverlay.style.display = 'none'; });
+      readerCloseBtn.addEventListener('click', function () { 
+        readerOverlay.style.display = 'none'; 
+        activePostIdForComments = null;
+      });
+      readerOverlay.addEventListener('click', function (e) { 
+        if (e.target === readerOverlay) {
+          readerOverlay.style.display = 'none'; 
+          activePostIdForComments = null;
+        }
+      });
     }
   }
 
@@ -271,9 +302,13 @@ var html = filtered.map(function (p) {
     initSupabase();
     initEvents();
     fetchAndRenderPosts();
+    startAutoRefresh();
   });
 
   return {
-    openPostModal: openPostModal
+    openPostModal: openPostModal,
+    fetchAndRenderPosts: fetchAndRenderPosts,
+    startAutoRefresh: startAutoRefresh,
+    stopAutoRefresh: stopAutoRefresh
   };
 })();
