@@ -1,32 +1,5 @@
 /* ============================================================
    styles.css — BioPulse (Painel de Formação Biotecnologia)
-   
-   ÍNDICE E ESTRUTURA DO ARQUIVO:
-   01. VARIÁVEIS (Tema Claro e Escuro)
-   02. RESET & BASE (Estilos globais)
-   03. UTILITÁRIOS (Glow, Barra de Progresso, Animations, Badges)
-   04. NAVEGAÇÃO PRINCIPAL (Nav Bar)
-   05. LAYOUT GERAL (Wrap, Page, Section, Headers)
-   06. SEÇÕES ESCURAS (Dark-sec)
-   07. HERO + DNA 3D (Efeitos e Moléculas)
-   08. HOME (Cards, Linha do Tempo, Cientistas, CEFET-MG, Stats)
-   09. HOME (Áreas, Setores, Infos, Notas)
-   10. KANBAN DE DISCIPLINAS (Obrigatórias e Optativas)
-   11. PAINEL DO ESTUDANTE (Subnav e Seletor de Períodos)
-   12. PAINEL: DASHBOARD DE NOTAS & SIMULADOR DE CRA
-   13. PAINEL: INTEGRALIZAÇÃO & BARRAS DE PROGRESSO
-   14. PAINEL: VISÃO GERAL (Kpis, Cards e Listas)
-   15. PAINEL: CARDS DE DISCIPLINAS (Sanfonas)
-   16. PAINEL: AVALIAÇÕES, STEPPER DE FALTAS & ANOTAÇÕES
-   17. PAINEL: PLANEJADOR DE OPTATIVAS (Drag and Drop)
-   18. PAINEL: QUADRO DE HORÁRIOS & DROPDOWNS COMPACTOS
-   19. PAINEL: MAPA DE PRÉ-REQUISITOS (Grafo Interativo)
-   20. CALENDÁRIO ACADÊMICO (Grid e Eventos)
-   21. PÁGINA DE AVISOS & MURAL DE COMUNICADOS [NOVO]
-   22. TUTORIAL INTERATIVO (Onboarding Modal) [NOVO]
-   23. FERRAMENTAS (FAB), SALVAR & RODAPÉ
-   24. RESPONSIVIDADE (Media Queries)
-   25. IMPRESSÃO (Print)
    ============================================================ */
 
 /* ===== 01. VARIÁVEIS (Tema Claro) ===== */
@@ -53,14 +26,14 @@
   --cal-user: #0fa877;
 
   /* Cores Temáticas dos Departamentos do CEFET-MG */
-  --debio-color: #2ecc71;   /* Ciências Biológicas - Verde */
-  --deteq-color: #e67e22;   /* Engenharia Química - Laranja */
-  --dcsa-color: #9b59b6;    /* Ciências Sociais Aplicadas - Roxo */
-  --dcsf-color: #1abc9c;    /* Ciências Sociais e Filosofia - Verde-água */
-  --dequi-color: #f1c40f;   /* Química - Amarelo/Dourado */
-  --decom-color: #3498db;   /* Computação - Azul */
-  --df-color: #e74c3c;      /* Física - Vermelho */
-  --dcta-color: #27ae60;    /* Ciência e Tecnologia Ambiental - Verde Escuro */
+  --debio-color: #2ecc71;
+  --deteq-color: #e67e22;
+  --dcsa-color: #9b59b6;
+  --dcsf-color: #1abc9c;
+  --dequi-color: #f1c40f;
+  --decom-color: #3498db;
+  --df-color: #e74c3c;
+  --dcta-color: #27ae60;
 }
 
 /* ===== 01. VARIÁVEIS (Tema Escuro) ===== */
@@ -102,7 +75,7 @@ a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;background:none}
 input,select,textarea{font-family:var(--font)}
 
-/* ===== 03. UTILITÁRIOS (Glow, Progress, Reveal, Badges) ===== */
+/* ===== 03. UTILITÁRIOS ===== */
 #glow{position:fixed;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(15,168,119,.12),transparent 62%);pointer-events:none;transform:translate(-50%,-50%);z-index:0;filter:blur(10px);will-change:transform}
 #progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:300;background:linear-gradient(90deg,var(--emerald),var(--lime))}
 
@@ -119,7 +92,7 @@ input,select,textarea{font-family:var(--font)}
 
 .biosoup{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 
-/* ===== 04. NAV (Barra de navegação superior) ===== */
+/* ===== 04. NAV ===== */
 nav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:250;display:flex;align-items:center;gap:2px;padding:6px;background:var(--navbg);backdrop-filter:blur(16px);border:0px solid var(--line-soft);border-radius:100px;box-shadow:0 12px 38px -20px rgba(10,33,29,.4);max-width:94vw;overflow-x:auto;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
 nav .brand{font-family:var(--font);font-weight:800;font-size:14px;padding:0 10px 0 12px;white-space:nowrap;color:var(--accent)}
@@ -129,7 +102,7 @@ nav button.lnk.active{background:var(--petrol);color:var(--mint)}
 nav .theme-tg{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--ink-soft);transition:.3s;flex-shrink:0}
 nav .theme-tg:hover{background:var(--line-soft);color:var(--ink)}
 
-/* ===== 05. LAYOUT GERAL (Wrap, Page, Section, Head) ===== */
+/* ===== 05. LAYOUT GERAL ===== */
 .wrap{max-width:1140px;margin:0 auto;padding:0 var(--s4);position:relative;z-index:2}
 .page{display:none;animation:fade .5s var(--ease)}
 .page.on{display:block}
@@ -141,7 +114,7 @@ section{padding:118px 0 40px;position:relative;overflow:hidden}
 .head h2{font-size:clamp(28px,4vw,46px);font-weight:700;margin-bottom:var(--s3)}
 .head p.lead{font-size:clamp(15px,1.4vw,17px);color:var(--ink-soft);font-weight:400;max-width:60ch}
 
-/* ===== 06. SEÇÕES ESCURAS (dark-sec) ===== */
+/* ===== 06. SEÇÕES ESCURAS ===== */
 .dark-sec{background:var(--petrol);color:#E8F2EE;position:relative;overflow:hidden;--accent:#7FE0BC}
 .dark-sec .wrap{position:relative;z-index:2}
 .dark-sec .idx{color:var(--lime)}
@@ -150,7 +123,7 @@ section{padding:118px 0 40px;position:relative;overflow:hidden}
 .dark-sec .note b{color:#fff}
 .dark-sec .flag{color:rgba(232,242,238,.8)}
 
-/* ===== 07. HERO + DNA 3D + Moléculas flutuantes ===== */
+/* ===== 07. HERO + DNA 3D ===== */
 #hero{min-height:100vh;display:flex;align-items:center;background:var(--petrol-deep);padding-top:90px;overflow:hidden;position:relative}
 #hero .blob{position:absolute;border-radius:50%;filter:blur(48px);z-index:1}
 #hero .b1{width:540px;height:540px;background:radial-gradient(circle,rgba(15,168,119,.5),rgba(12,48,43,0));top:-140px;right:-100px;animation:float 16s var(--ease) infinite}
@@ -186,7 +159,7 @@ section{padding:118px 0 40px;position:relative;overflow:hidden}
 .float-mol{position:absolute;opacity:.5;animation:bob 9s var(--ease) infinite;z-index:1}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-18px) rotate(12deg)}}
 
-/* ===== 08. HOME: cards, timeline história, cientistas, cefet, stats ===== */
+/* ===== 08. HOME ===== */
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3);margin-top:var(--s4)}
 .card{background:var(--bg-soft);border:0px solid var(--line-soft);border-radius:var(--radius);padding:30px;transition:transform .45s var(--ease),box-shadow .45s var(--ease),border-color .45s}
 .card:hover{transform:translateY(-5px);box-shadow:0 22px 50px -34px rgba(10,33,29,.38);border-color:rgba(15,168,119,.3)}
@@ -228,7 +201,7 @@ section{padding:118px 0 40px;position:relative;overflow:hidden}
 .stat .sv{font-family:var(--font);font-weight:800;font-size:32px;color:var(--accent);letter-spacing:-.02em}
 .stat .sl{font-size:11.5px;color:var(--ink-soft);margin-top:7px;letter-spacing:.02em}
 
-/* ===== 09. HOME: áreas, setores, infos, note ===== */
+/* ===== 09. HOME ===== */
 .areas{display:grid;grid-template-columns:repeat(3,1fr);gap:30px 40px;margin-top:var(--s4)}
 .area{border-top:1px solid var(--line);padding:20px 0 0;transition:border-color .3s}
 .area:hover{border-top-color:var(--accent)}
@@ -252,7 +225,7 @@ section{padding:118px 0 40px;position:relative;overflow:hidden}
 .note{margin-top:var(--s4);padding:var(--s3) var(--s4);border-left:3px solid var(--emerald);background:var(--bg-soft);border-radius:0 12px 12px 0;font-size:13.5px;color:var(--ink-soft);font-weight:400}
 .note b{color:var(--ink);font-weight:700}
 
-/* ===== 10. KANBAN DE DISCIPLINAS (Obrigatórias e Optativas) ===== */
+/* ===== 10. KANBAN DE DISCIPLINAS ===== */
 .kanban-board{display:grid;grid-template-columns:repeat(3, 1fr);gap:20px;margin-top:24px;overflow-x:auto;padding-bottom:16px}
 .kanban-col{background:var(--bg-soft);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-height:500px}
 .kanban-col-header{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:4px}
@@ -261,7 +234,6 @@ section{padding:118px 0 40px;position:relative;overflow:hidden}
 .kanban-card-title{font-size:12.5px;font-weight:700;line-height:1.3;margin-bottom:20px;color:var(--ink)}
 .kanban-card-meta{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:500;margin-top:6px}
 
-/* Tag de departamento */
 .tag-dept{border-radius:4px;padding:1.5px 5px;color:#fff;font-size:8.5px;text-transform:uppercase;display:inline-block;margin:0;vertical-align:middle}
 .tag-dept.debio{background-color:var(--debio-color)}
 .tag-dept.deteq{background-color:var(--deteq-color)}
@@ -277,7 +249,6 @@ body.theme-dark .tag-dept.dequi{color:#07211d}
 .dept-legend-item{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700}
 .dept-legend-dot{width:12px;height:12px;border-radius:3px}
 
-/* Cores translúcidas dos cards no Kanban da Grade */
 .kanban-card.debio-card{background:rgba(46,204,113,.08);border-color:rgba(46,204,113,.28)}
 .kanban-card.decom-card{background:rgba(52,152,219,.08);border-color:rgba(52,152,219,.28)}
 .kanban-card.deteq-card{background:rgba(230,126,34,.08);border-color:rgba(230,126,34,.28)}
@@ -296,13 +267,24 @@ body.theme-dark .kanban-card.dequi-card{background:rgba(244,208,63,.10);border-c
 body.theme-dark .kanban-card.df-card{background:rgba(241,148,138,.12);border-color:rgba(241,148,138,.30)}
 body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-color:rgba(82,190,128,.32)}
 
-/* ===== 11. PAINEL: subnav, semtabs, dropdown de período ===== */
+/* ===== 11. PAINEL DO ESTUDANTE ===== */
 .subnav{display:flex;gap:4px;margin-bottom:var(--s4);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .subnav button{font-size:13px;font-weight:600;color:var(--ink-soft);padding:11px 16px;border-bottom:2px solid transparent;transition:.3s}
 .subnav button.on{color:var(--ink);border-bottom-color:var(--emerald)}
-.panel-block{display:none}.panel-block.on{display:block;animation:fade .4s var(--ease)}
 
-.subnav-wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:var(--s4);border-bottom:1px solid var(--line);flex-wrap:wrap}
+/* CENTRALIZAÇÃO PADRÃO PARA TODAS AS SUB-ABAS DO PAINEL */
+.panel-block {
+  display: none;
+  max-width: 1140px;
+  margin: 0 auto;
+  width: 100%;
+}
+.panel-block.on {
+  display: block;
+  animation: fade .4s var(--ease);
+}
+
+.subnav-wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:var(--s4);border-bottom:1px solid var(--line);flex-wrap:wrap;max-width: 1140px;margin-left: auto;margin-right: auto;}
 .subnav-wrap .subnav{margin-bottom:0;border-bottom:none;flex:1}
 .period-picker{position:relative;padding-bottom:6px}
 .period-btn{display:inline-flex;align-items:center;gap:8px;background:var(--bg-soft);color:var(--ink);font-family:var(--font);font-weight:700;font-size:13px;padding:9px 14px;border-radius:10px;transition:.2s var(--ease)}
@@ -316,7 +298,7 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
 .period-opt:hover{background:rgba(15,168,119,.08);color:var(--accent)}
 .period-opt.sel{background:var(--petrol);color:var(--mint);font-weight:700}
 
-/* ===== 12. PAINEL/NOTAS: dashboard (gráfico CRA + indicadores summary) ===== */
+/* ===== 12. PAINEL/NOTAS: DASHBOARD ===== */
 .notas-dashboard-grid{margin-bottom:var(--s4);width:100%}
 .sim-chart{background:var(--petrol);border-radius:var(--radius);padding:24px 28px;color:#E8F2EE;display:flex;flex-direction:column}
 .sim-cra{margin-bottom:14px}
@@ -341,8 +323,20 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
 .cra-collapse-body{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s var(--ease),opacity .3s,margin .3s}
 .cra-collapse.open .cra-collapse-body{max-height:700px;opacity:1;margin-top:16px}
 
-/* ===== 13. PAINEL/NOTAS: integralização (integr) + miniprog ===== */
-.integr{background:var(--petrol);color:#E8F2EE;border-radius:var(--radius);padding:28px 32px;margin-bottom:var(--s4);position:relative;overflow:hidden}
+/* ===== 13. PAINEL/NOTAS: INTEGRALIZAÇÃO (DELIMITADO) ===== */
+.integr{
+  background:var(--petrol);
+  color:#E8F2EE;
+  border-radius:var(--radius);
+  padding:28px 32px;
+  margin-bottom:var(--s4);
+  position:relative;
+  overflow:hidden;
+  max-width: 1140px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
 .integr .itop{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
 .integr h4{color:#fff;font-size:16px}
 .integr .icount{font-family:var(--font);font-weight:700;font-size:15px;color:var(--lime)}
@@ -357,7 +351,7 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
 .miniprog .mbar{height:8px;border-radius:100px;background:var(--line-soft);overflow:hidden}
 .miniprog .mbar .mf{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--emerald),var(--lime));transition:width .7s var(--ease)}
 
-/* ===== 14. PAINEL/VISÃO GERAL: kpis, cards, listas ===== */
+/* ===== 14. PAINEL/VISÃO GERAL ===== */
 .ov-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3);margin-bottom:var(--s4)}
 .ov-kpi{background:var(--bg-soft);border:0px solid var(--line-soft);border-radius:14px;padding:24px var(--s3);transition:border-color .3s}
 .ov-kpi:hover{border-color:rgba(15,168,119,.3)}
@@ -376,7 +370,7 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
 .ov-li .osub{font-size:11.5px;color:var(--ink-soft);font-weight:400;margin-top:3px}
 .ov-empty{font-size:12.5px;color:var(--ink-soft);font-weight:400;padding:6px 0}
 
-/* ===== 15. PAINEL/NOTAS: disciplinas (sanfona subj) ===== */
+/* ===== 15. PAINEL/NOTAS: DISCIPLINAS ===== */
 .subj{background:var(--bg-soft);border-radius:14px;margin-bottom:14px;transition:all .3s var(--ease);overflow:hidden;box-shadow:0 1px 3px rgba(10,33,29,.02)}
 .subj:hover{border-color:rgba(15,168,119,.3)}
 .subj.locked{opacity:.8}
@@ -401,7 +395,7 @@ body.theme-dark .kanban-card.dcta-card{background:rgba(82,190,128,.14);border-co
 .subj-sub{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-soft);margin-top:18px;margin-bottom:9px}
 .subj .cd + .tag-dept { margin-left: 12px !important; }
 
-/* ===== 16. PAINEL: avaliações, faltas, badges, addrow/addopt, titem ===== */
+/* ===== 16. PAINEL: AVALIAÇÕES E FALTAS ===== */
 .eval-list{margin-bottom:8px}
 .eval-row{display:grid;grid-template-columns:1fr 120px 90px 26px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line-soft);font-size:12.5px}
 .eval-row:first-child{border-top:none}
@@ -453,7 +447,7 @@ body.theme-dark .badge.neutral{background:rgba(127,224,188,.08)}
 .empty{font-size:13px;color:var(--ink-soft);font-weight:400;padding:8px 2px}
 
 /* ===== 17. PAINEL/PLANEJADOR ===== */
-.planner{display:grid;grid-template-columns:260px 1fr;gap:var(--s4);align-items:start}
+.planner{display:grid;grid-template-columns:260px 1fr;gap:var(--s4);align-items:start;width:100%}
 .plan-pool{background:var(--bg-soft);border:1px solid var(--line-soft);border-radius:var(--radius);padding:var(--s3)}
 .plan-pool h4{font-size:14px;margin-bottom:6px}
 .plan-pool .ph{font-size:11.5px;color:var(--ink-soft);font-weight:400;margin-bottom:var(--s3)}
@@ -469,7 +463,7 @@ body.theme-dark .badge.neutral{background:rgba(127,224,188,.08)}
 .optchip.bad{border-color:var(--danger);background:var(--danger-bg)}
 .plan-warn{font-size:11px;color:var(--danger);margin-top:4px;font-weight:700}
 
-/* ===== 18. PAINEL/HORÁRIOS (grade-sched) ===== */
+/* ===== 18. PAINEL/HORÁRIOS ===== */
 .grid-sched{width:100%;border-collapse:collapse;font-size:12px;background:var(--bg-soft);border-radius:var(--radius);overflow:hidden;border:1px solid var(--line)}
 .grid-sched th{background:var(--petrol);color:#fff;font-family:var(--font);font-weight:700;font-size:11px;letter-spacing:.04em;padding:14px 10px;text-align:left}
 .grid-sched td{border-top:1px solid var(--line-soft);border-left:1px solid var(--line-soft);padding:10px;vertical-align:top}
@@ -486,7 +480,6 @@ body.theme-dark .badge.neutral{background:rgba(127,224,188,.08)}
 .campus-ns{color:var(--accent)}
 .campus-ng{color:var(--warn)}
 
-/* Dropdowns compactos de horários */
 .sched-select-dropdown {
   padding: 8px 32px 8px 12px !important;
   border: 1px solid var(--line) !important;
@@ -515,7 +508,6 @@ body.theme-dark .sched-select-dropdown {
   background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23EAF4EF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 10px center !important;
 }
 
-/* Destaque suave em verde para turmas práticas (T1 / T2) */
 .cell-practice-highlight {
   background-color: #D4EDDA !important;
   border: 1px solid #C3E6CB !important;
@@ -539,8 +531,8 @@ body.theme-dark .cell-practice-highlight .cell-p {
   color: var(--mint) !important;
 }
 
-/* ===== 19. PAINEL/PRÉ-REQUISITOS (grafo) ===== */
-.graph-wrap{display:grid;grid-template-columns:1fr 320px;gap:var(--s3);margin-top:var(--s3);border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--bg-soft);overflow:hidden;height:640px}
+/* ===== 19. PAINEL/PRÉ-REQUISITOS ===== */
+.graph-wrap{display:grid;grid-template-columns:1fr 320px;gap:var(--s3);margin-top:var(--s3);border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--bg-soft);overflow:hidden;height:640px;width:100%}
 .graph-canvas{position:relative;width:100%;height:100%;overflow:hidden;background:var(--bg)}
 .gsvg{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
 .gnode{position:absolute;z-index:2;transform:translate(-50%,-50%);background:var(--bg-soft);color:var(--ink);padding:10px 14px;border-radius:12px;font-family:var(--font);font-size:11.5px;font-weight:700;text-align:center;box-shadow:0 4px 12px -5px rgba(10,33,29,.15);cursor:pointer;transition:all .25s var(--ease);width:130px;line-height:1.25}
@@ -563,7 +555,7 @@ body.theme-dark .gnode.unlocks{color:var(--mint)}
 .glegend span{display:flex;align-items:center;gap:8px}
 .glegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 
-/* ===== 20. CALENDÁRIO (grid + pílulas + modal) ===== */
+/* ===== 20. CALENDÁRIO ===== */
 .calendar-layout{display:grid;grid-template-columns:1fr;gap:var(--s3);align-items:start}
 .calendar-container{background:var(--bg-soft);border: none; border-radius:var(--radius);padding:24px;overflow:hidden;box-shadow:0 12px 40px -20px rgba(10,33,29,.2)}
 .calendar-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
@@ -603,7 +595,7 @@ body.theme-dark .gnode.unlocks{color:var(--mint)}
 @keyframes fadeOverlay{from{opacity:0}to{opacity:1}}
 @keyframes scaleModal{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 
-/* ===== 21. PÁGINA DE AVISOS & MURAL DE COMUNICADOS [NOVO] ===== */
+/* ===== 21. AVISOS ===== */
 .grade-tab-block { display: none; }
 .grade-tab-block.on { display: block; animation: fade .4s var(--ease); }
 
@@ -640,13 +632,12 @@ body.theme-dark .gnode.unlocks{color:var(--mint)}
 .aviso-card-title { font-size: 16px; font-weight: 800; color: var(--ink); }
 .aviso-card-msg { font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
 
-/* Régua minimalista de filtros com seleção em quadrado */
 .period-selection-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--bg-soft); border: 0px solid var(--line-soft); border-radius: var(--radius); padding: 10px 18px; margin-bottom: var(--s4); box-shadow: 0 6px 16px -10px rgba(10,33,29,.15); flex-wrap: wrap; }
 .period-chips-group { display: flex; gap: 4px; align-items: stretch; background: var(--bg); padding: 4px; border: 0px solid var(--line-soft); border-radius: var(--radius); }
 .period-chips-group button.regua-chip { font-family: var(--font); font-size: 12.5px; font-weight: 700; color: var(--ink-soft); padding: 6px 14px; border-radius: var(--radius); border: none; background: transparent; transition: .2s; cursor: pointer; }
 .period-chips-group button.regua-chip.on { background: var(--petrol); color: var(--mint); }
 
-/* ===== 22. TUTORIAL INTERATIVO (Onboarding Modal) [NOVO] ===== */
+/* ===== 22. TUTORIAL INTERATIVO ===== */
 .onboarding-overlay { position: fixed; inset: 0; background: rgba(6, 32, 28, 0.65); backdrop-filter: blur(6px); z-index: 400; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeOverlay 0.25s var(--ease); }
 .onboarding-overlay.open { display: flex; }
 .onboarding-modal { background: #ffffff; border: 1px solid var(--line); border-radius: var(--radius); width: 100%; max-width: 580px; box-shadow: 0 24px 60px -15px rgba(10, 33, 29, 0.4); display: flex; flex-direction: column; overflow: hidden; animation: scaleModal 0.25s var(--ease); transition: all 0.3s var(--ease); }
@@ -720,7 +711,6 @@ body.theme-dark .demo-cal-day { background: var(--bg-soft); }
 .demo-fab-preview { display: flex; align-items: center; gap: 12px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
 .demo-fab-btn { width: 38px; height: 38px; border-radius: 50%; background: #ffffff; border: 1px solid var(--line); color: var(--ink); display: grid; place-items: center; box-shadow: 0 4px 12px -4px rgba(10, 33, 29, 0.2); }
 body.theme-dark .demo-fab-btn { background: var(--navbg); }
-/* BOTÃO DE AVISOS NO MENU FLUTUANTE (FAB) */
 #fab-avisos:hover {
   color: var(--ink) !important;
   border-color: var(--emerald) !important;
@@ -748,7 +738,7 @@ body.theme-dark .onboarding-btn.sec { background: var(--bg-soft); }
 .onboarding-btn.sec:hover:not(:disabled) { background: var(--line-soft); }
 .onboarding-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ===== 23. FERRAMENTAS (FAB), SALVAR & RODAPÉ ===== */
+/* ===== 23. FERRAMENTAS ===== */
 .tools{position:fixed;right:22px;bottom:22px;z-index:240;display:flex;flex-direction:column;align-items:center;gap:10px}
 .tools-menu{display:flex;flex-direction:column;gap:10px;opacity:0;transform:translateY(12px) scale(.85);pointer-events:none;transition:.35s var(--ease)}
 .tools.open .tools-menu{opacity:1;transform:none;pointer-events:auto}
@@ -820,7 +810,6 @@ footer b{color:rgba(232,242,238,.85)}
 /* ===== 25. IMPRESSÃO ===== */
 @media print{nav,.tools,.btnsave,#glow,.biosoup,.dna3d-wrap{display:none!important}.page{display:block!important}section{padding:30px 0;page-break-inside:avoid}body{background:#fff}}
 
-/* BOTÕES DE AÇÃO DO BIOBLOG (ESCREVER, PUBLICAR E COMENTAR): VERDE CLARO DEGRADÊ */
 #btn-open-blog-form,
 #btn-submit-blog,
 #blog-comment-form button[type="submit"] {
@@ -863,7 +852,6 @@ body.theme-dark #blog-comment-form button[type="submit"] {
   box-shadow: 0 4px 14px rgba(15, 168, 119, 0.4) !important;
 }
 
-/* ESTILO DA FAIXA RETANGULAR DE AVISOS NA VISÃO GERAL */
 .aviso-banner-card {
   background: var(--bg-soft);
   border: 1px solid var(--line-soft);
@@ -879,7 +867,6 @@ body.theme-dark #blog-comment-form button[type="submit"] {
   border-color: var(--emerald);
 }
 
-/* AJUSTE DE HOVER NOS BOTÕES VERDES E DIVISÓRIA EM DISPOSITIVOS MÓVEIS */
 #btn-add-grade-subj:hover,
 #opt-add:hover {
   background: var(--emerald-d) !important;
@@ -903,9 +890,6 @@ body.theme-dark #blog-comment-form button[type="submit"] {
   }
 }
 
-/* ========================================================
-   ESTILOS RESPONSIVOS DA CUSTOMIZAÇÃO DA GRADE (MOBILE SAFE)
-   ======================================================== */
 .custom-grid-split {
   display: grid;
   grid-template-columns: 1fr 1px 1fr;
@@ -980,7 +964,6 @@ body.theme-dark #blog-comment-form button[type="submit"] {
   background: var(--danger-bg) !important;
 }
 
-/* REGRAS EXCLUSIVAS PARA TELAS MENORES (CELULARES) */
 @media (max-width: 640px) {
   .custom-grid-split {
     grid-template-columns: 1fr !important;
@@ -1016,7 +999,6 @@ body.theme-dark #blog-comment-form button[type="submit"] {
   }
 }
 
-/* Estilo refinado para o botão com ícone de lixeira */
 .subj .rm-opt {
   display: inline-flex;
   align-items: center;
@@ -1044,3 +1026,27 @@ body.theme-dark #blog-comment-form button[type="submit"] {
 .subj .rm-opt svg {
   pointer-events: none;
 }
+
+/* ===== 13. PAINEL/NOTAS: INTEGRALIZAÇÃO (ALINHAMENTO FINO) ===== */
+.integr {
+  background: var(--petrol);
+  color: #E8F2EE;
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: var(--s4);
+  position: relative;
+  overflow: hidden;
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.integr .itop{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.integr h4{color:#fff;font-size:16px}
+.integr .icount{font-family:var(--font);font-weight:700;font-size:15px;color:var(--lime)}
+.integr .isub{font-size:12.5px;color:rgba(232,242,238,.6);font-weight:400;margin:5px 0 18px}
+.ibar{height:8px;border-radius:100px;background:rgba(255,255,255,.1);overflow:hidden}
+.ibar .ifill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--emerald),var(--lime));width:0;transition:width .8s var(--ease)}
+.imeta{display:flex;gap:28px;margin-top:16px;flex-wrap:wrap;font-size:12.5px;color:rgba(232,242,238,.65)}
+.imeta b{font-family:var(--font);color:#fff;font-weight:700}
