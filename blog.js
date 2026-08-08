@@ -11,7 +11,7 @@
   }
 
 /* ============================================================
-   blog.js — BioBlog CEFET-MG (Modal Exclusivo + Comentários + Polling 10s)
+   blog.js — BioBlog CEFET-MG (Modal + Comentários + Likes/Dislikes + Polling 10s)
    ============================================================ */
 window.BP_BLOG = (function () {
   "use strict";
@@ -39,6 +39,40 @@ window.BP_BLOG = (function () {
     var d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+  }
+
+  /* Registra a reação de Like ou Dislike evitando duplicidade local */
+  async function reagirPost(postId, tipo) {
+    if (!supabaseClient) return;
+
+    var storageKey = 'bp_voto_post_' + postId;
+    if (localStorage.getItem(storageKey)) {
+      alert("Você já reagiu a este artigo!");
+      return;
+    }
+
+    try {
+      var { error } = await supabaseClient.rpc('reacao_post', {
+        post_id_param: postId,
+        tipo_reacao: tipo
+      });
+
+      if (error) throw error;
+
+      localStorage.setItem(storageKey, tipo);
+      
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('reagir_post_blog', { post_id: postId, tipo: tipo });
+      }
+
+      await fetchAndRenderPosts();
+      
+      if (activePostIdForComments === postId) {
+        updateModalReacoes(postId);
+      }
+    } catch (err) {
+      console.error("Erro ao registrar reação:", err);
+    }
   }
 
   /* Busca e exibe os artigos do BioBlog */
@@ -73,8 +107,11 @@ window.BP_BLOG = (function () {
       }
 
       var html = filtered.map(function (p) {
-        return '<div class="aviso-card comum" onclick="window.BP_BLOG.openPostModal(' + p.id + ')" style="display:flex; flex-direction:column; justify-space-between; height:100%; cursor:pointer;">' +
-          '<div>' +
+        var likesCount = p.likes || 0;
+        var dislikesCount = p.dislikes || 0;
+
+        return '<div class="aviso-card comum" style="display:flex; flex-direction:column; justify-space-between; height:100%;">' +
+          '<div onclick="window.BP_BLOG.openPostModal(' + p.id + ')" style="cursor:pointer;">' +
             '<div class="aviso-card-header" style="margin-bottom:8px;">' +
               '<span class="aviso-tag-pill comum">' + esc(p.categoria) + '</span>' +
               '<span class="aviso-meta-info">' + formatDateBR(p.created_at) + '</span>' +
@@ -82,9 +119,18 @@ window.BP_BLOG = (function () {
             '<div class="aviso-card-title" style="margin-bottom:8px;">' + esc(p.titulo) + '</div>' +
             '<div class="aviso-card-msg" style="margin-bottom:12px;">' + esc(p.resumo) + '</div>' +
           '</div>' +
+          
           '<div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line-soft); padding-top:10px; margin-top:12px;">' +
             '<span style="font-size:11.5px; color:var(--ink-soft); font-weight:600;">Por: <b>' + esc(p.autor) + '</b></span>' +
-            '<span style="font-size:11.5px; font-weight:700; color:var(--accent);">Ler artigo completo →</span>' +
+            
+            '<div style="display:flex; align-items:center; gap:8px;">' +
+              '<button class="blog-react-btn" onclick="window.BP_BLOG.reagirPost(' + p.id + ', \'like\')" title="Curtir artigo">' +
+                '👍 <b>' + likesCount + '</b>' +
+              '</button>' +
+              '<button class="blog-react-btn" onclick="window.BP_BLOG.reagirPost(' + p.id + ', \'dislike\')" title="Não gostei">' +
+                '👎 <b>' + dislikesCount + '</b>' +
+              '</button>' +
+            '</div>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -113,7 +159,7 @@ window.BP_BLOG = (function () {
     try {
       var { error } = await supabaseClient
         .from('posts')
-        .insert([{ autor: autor, categoria: categoria, titulo: titulo, resumo: resumo, conteudo: conteudo, status: 'aprovado' }]);
+        .insert([{ autor: autor, categoria: categoria, titulo: titulo, resumo: resumo, conteudo: conteudo, status: 'aprovado', likes: 0, dislikes: 0 }]);
 
       if (error) throw error;
 
@@ -128,6 +174,18 @@ window.BP_BLOG = (function () {
     } finally {
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Publicar no BioBlog"; }
     }
+  }
+
+  function updateModalReacoes(postId) {
+    var posts = window._currentBlogPosts || [];
+    var post = posts.find(function (p) { return p.id === postId; });
+    if (!post) return;
+
+    var likesElem = document.getElementById('blog-modal-likes-cnt');
+    var dislikesElem = document.getElementById('blog-modal-dislikes-cnt');
+
+    if (likesElem) likesElem.textContent = post.likes || 0;
+    if (dislikesElem) dislikesElem.textContent = post.dislikes || 0;
   }
 
   /* Modal de Leitura */
@@ -147,7 +205,14 @@ window.BP_BLOG = (function () {
     if (titleElem) titleElem.textContent = post.titulo;
     if (catElem) catElem.textContent = post.categoria;
     if (authorDateElem) authorDateElem.textContent = 'Por: ' + post.autor + ' · Publicado em ' + formatDateBR(post.created_at);
-    if (contentElem) contentElem.innerHTML = esc(post.conteudo).replace(/\n/g, '<br>');
+    if (contentElem) {
+      contentElem.innerHTML = esc(post.conteudo).replace(/\n/g, '<br>') +
+        '<div style="margin-top:20px; padding-top:14px; border-top:1px solid var(--line-soft); display:flex; gap:12px; align-items:center;">' +
+          '<span style="font-size:12px; font-weight:700; color:var(--ink-soft);">Gostou do artigo?</span>' +
+          '<button class="blog-react-btn" onclick="window.BP_BLOG.reagirPost(' + post.id + ', \'like\')">👍 <b id="blog-modal-likes-cnt">' + (post.likes || 0) + '</b></button>' +
+          '<button class="blog-react-btn" onclick="window.BP_BLOG.reagirPost(' + post.id + ', \'dislike\')">👎 <b id="blog-modal-dislikes-cnt">' + (post.dislikes || 0) + '</b></button>' +
+        '</div>';
+    }
 
     if (overlay) overlay.style.display = 'flex';
     fetchAndRenderComments(post.id);
@@ -218,14 +283,13 @@ window.BP_BLOG = (function () {
     stopAutoRefresh();
     autoRefreshTimer = setInterval(function () {
       var blogPage = document.getElementById('page-blog');
-      // Atualiza apenas se o usuário estiver navegando na página do blog
       if (blogPage && blogPage.classList.contains('on')) {
         fetchAndRenderPosts();
         if (activePostIdForComments) {
           fetchAndRenderComments(activePostIdForComments);
         }
       }
-    }, 10000); // 10.000 ms = 10 segundos
+    }, 10000);
   }
 
   function stopAutoRefresh() {
@@ -320,6 +384,7 @@ window.BP_BLOG = (function () {
   return {
     openPostModal: openPostModal,
     fetchAndRenderPosts: fetchAndRenderPosts,
+    reagirPost: reagirPost,
     startAutoRefresh: startAutoRefresh,
     stopAutoRefresh: stopAutoRefresh
   };

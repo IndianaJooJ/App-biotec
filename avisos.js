@@ -197,3 +197,4 @@ window.BP_AVISOS = (function () {
     checkUnreadPopUp: checkUnreadPopUp
   };
 })();
+
