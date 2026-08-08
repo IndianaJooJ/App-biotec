@@ -1,4 +1,3 @@
-
 /* ============================================================
    AVISOS.JS — Módulo Exclusivo de Gestão e Mural de Avisos (Supabase Integrated)
    ============================================================ */
@@ -33,6 +32,8 @@ window.BP_AVISOS = (function () {
   /* Busca os avisos ativos no Supabase */
   async function fetchAvisos() {
     if (!supabaseClient) return [];
+    
+    // Obtém a data atual em formato YYYY-MM-DD
     var todayStr = new Date().toISOString().split('T')[0];
 
     try {
@@ -45,6 +46,7 @@ window.BP_AVISOS = (function () {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
       loadedAvisos = data || [];
       return loadedAvisos;
     } catch (err) {
@@ -58,7 +60,7 @@ window.BP_AVISOS = (function () {
     var container = document.getElementById('avisos-feed-container');
     if (!container) return;
 
-    container.innerHTML = '<div class="empty">Carregando mural de avisos...</div>';
+    container.innerHTML = '<div class="empty">Conectando ao mural de avisos oficiais...</div>';
 
     var list = await fetchAvisos();
 
@@ -68,11 +70,11 @@ window.BP_AVISOS = (function () {
     });
 
     if (!filtered.length) {
-      container.innerHTML = '<div class="empty">Nenhum aviso ativo para o filtro selecionado.</div>';
+      container.innerHTML = '<div class="empty">Nenhum aviso ativo publicado para o filtro selecionado no momento.</div>';
       return;
     }
 
-    var html = filtered.map(function (a, index) {
+    var html = filtered.map(function (a) {
       var labelNivel = a.nivel === 'critico' ? 'Crítico' : (a.nivel === 'atencao' ? 'Atenção' : 'Comum');
       var dataExibicao = formatDateBR(a.data_inicio);
 
@@ -101,7 +103,7 @@ window.BP_AVISOS = (function () {
       if (!card) return;
 
       var id = card.getAttribute('data-aviso-id');
-      var aviso = loadedAvisos.find(function (x) { return x.id === id; });
+      var aviso = loadedAvisos.find(function (x) { return String(x.id) === String(id); });
       if (!aviso) return;
 
       if (typeof window.openEventDetailsModal === 'function') {
@@ -165,7 +167,7 @@ window.BP_AVISOS = (function () {
 
     var latestAviso = list[0];
 
-    if (latestAviso && latestAviso.id !== lastSeenId) {
+    if (latestAviso && String(latestAviso.id) !== String(lastSeenId)) {
       if (typeof window.openEventDetailsModal === 'function') {
         var colorVar = latestAviso.nivel === 'critico' ? '--cal-aval' : (latestAviso.nivel === 'atencao' ? '--cal-prazos' : '--cal-ensino');
         window.openEventDetailsModal({
@@ -194,7 +196,7 @@ window.BP_AVISOS = (function () {
   return {
     getLoadedAvisos: function() { return loadedAvisos; },
     renderFeed: renderFeed,
+    fetchAvisos: fetchAvisos,
     checkUnreadPopUp: checkUnreadPopUp
   };
 })();
-
