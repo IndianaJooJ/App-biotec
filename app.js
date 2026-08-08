@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
     var optKeys = Object.keys(OPT_CATALOGUE);
-    for (var o = 0; k < optKeys.length; o++) {
+    for (var o = 0; o < optKeys.length; o++) {
       var opt = OPT_CATALOGUE[optKeys[o]];
       if (opt && opt.title && opt.title.toLowerCase() === cleanName.toLowerCase()) {
         return opt.dept ? opt.dept.toLowerCase() : 'debio';
@@ -1246,6 +1246,39 @@ document.addEventListener('DOMContentLoaded', function () {
     return pill;
   }
 
+  /* Clique nos cartões Kanban das Obrigatórias */
+  var gradeKanban = document.getElementById('grade-kanban-board');
+  if (gradeKanban) {
+    gradeKanban.addEventListener('click', function (e) {
+      var card = e.target.closest('.kanban-card'); if (!card) return;
+      var subjId = card.getAttribute('data-subj-id');
+      var data = (D.OBR_CATALOGUE || {})[subjId]; if (!data) return;
+      
+      window.openEventDetailsModal({
+        title: data.title + ' (' + data.code + ')',
+        type: 'Disciplina Obrigatória · ' + data.dept,
+        credits: data.hours + ' · ' + data.credits + ' Créditos',
+        desc: data.desc
+      }, true, data.color);
+    });
+  }
+
+  /* Clique nos cartões Kanban das Optativas */
+  var optKanban = document.getElementById('opt-kanban-board');
+  if (optKanban) {
+    optKanban.addEventListener('click', function (e) {
+      var card = e.target.closest('.kanban-card'); if (!card) return;
+      var optId = card.getAttribute('data-opt-id'); var data = OPT_CATALOGUE[optId]; if (!data) return;
+
+      window.openEventDetailsModal({
+        title: data.title + ' (' + data.code + ')',
+        type: 'Disciplina Optativa · ' + data.dept,
+        credits: data.hours + ' · ' + data.credits + ' Créditos',
+        desc: data.desc
+      }, true, data.color);
+    });
+  }
+
   /* ===== 17. SUB-ABAS DA GRADE OBRIGATÓRIA / OPTATIVAS ===== */
   document.addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-grade-tab]');
@@ -1275,23 +1308,59 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  /* MODAL DE EVENTOS GLOBAL */
+  /* MODAL DE EVENTOS E EMENTAS GLOBAL */
   var modalOverlay = document.getElementById('cal-event-modal-overlay');
   var closeBtn = document.getElementById('cal-modal-close-btn');
 
   window.openEventDetailsModal = function (ev, isOficial, colorVar) {
-    var bgHeader = document.getElementById('cal-modal-header-bg'); if (bgHeader) bgHeader.style.backgroundColor = 'var(' + colorVar + ')';
-    var catElem = document.getElementById('cal-modal-category'); if (catElem) catElem.textContent = ev.type;
-    var titleElem = document.getElementById('cal-modal-title'); if (titleElem) titleElem.textContent = ev.title;
+    var bgHeader = document.getElementById('cal-modal-header-bg'); 
+    if (bgHeader) bgHeader.style.backgroundColor = 'var(' + colorVar + ')';
+    
+    var catElem = document.getElementById('cal-modal-category'); 
+    if (catElem) catElem.textContent = ev.type;
+    
+    var titleElem = document.getElementById('cal-modal-title'); 
+    if (titleElem) titleElem.textContent = ev.title;
+    
+    var dateRow = document.querySelector('.cal-modal-info-row:has(#cal-modal-date-str)');
     var dateStrElem = document.getElementById('cal-modal-date-str');
-    if (dateStrElem) {
-      if (ev.date) { var dateParts = ev.date.split('-'); var parsedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; var dateStr = parsedDate.toLocaleDateString('pt-BR', options); dateStrElem.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1); } else { dateStrElem.textContent = "Sem data cadastrada"; }
+
+    // Se for disciplina (sem formato YYYY-MM-DD), esconde a linha da data
+    if (ev.date && ev.date.indexOf('-') !== -1 && ev.date.split('-').length === 3) {
+      if (dateRow) dateRow.style.display = 'flex';
+      var dateParts = ev.date.split('-'); 
+      var parsedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+      var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; 
+      var dateStr = parsedDate.toLocaleDateString('pt-BR', options); 
+      if (dateStrElem) dateStrElem.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+    } else {
+      if (dateRow) dateRow.style.display = 'none';
+      if (dateStrElem) dateStrElem.textContent = '';
     }
+
     var originContainer = document.getElementById('cal-modal-origin');
     if (originContainer) {
-      if (!isOficial) { originContainer.innerHTML = 'Agenda Pessoal / Customizada <br><button id="btn-delete-cal-event" class="badge bad" style="margin-top: 8px; border: none; cursor: pointer;">Excluir este evento</button>'; var delBtn = document.getElementById('btn-delete-cal-event'); if (delBtn) delBtn.onclick = function () { if (confirm("Deseja realmente apagar este evento de sua agenda?")) { agenda.splice(ev.index, 1); store.set('bp_agenda', agenda); if (modalOverlay) modalOverlay.style.display = 'none'; renderCalendario(); renderVisao(); renderAgenda(); flashSave(); } }; } else { originContainer.textContent = 'Oficial — Deliberação CGRAD 25/2026 (CEFET-MG)'; }
+      if (ev.credits) {
+        originContainer.textContent = ev.credits;
+      } else if (!isOficial) { 
+        originContainer.innerHTML = 'Agenda Pessoal / Customizada <br><button id="btn-delete-cal-event" class="badge bad" style="margin-top: 8px; border: none; cursor: pointer;">Excluir este evento</button>'; 
+        var delBtn = document.getElementById('btn-delete-cal-event'); 
+        if (delBtn) delBtn.onclick = function () { 
+          if (confirm("Deseja realmente apagar este evento de sua agenda?")) { 
+            agenda.splice(ev.index, 1); 
+            store.set('bp_agenda', agenda); 
+            if (modalOverlay) modalOverlay.style.display = 'none'; 
+            renderCalendario(); renderVisao(); renderAgenda(); flashSave(); 
+          } 
+        }; 
+      } else { 
+        originContainer.textContent = 'Oficial — Deliberação CGRAD 25/2026 (CEFET-MG)'; 
+      }
     }
-    var descElem = document.getElementById('cal-modal-desc'); if (descElem) descElem.innerHTML = ev.desc ? esc(ev.desc) : 'Sem descrição disponível para este evento.';
+
+    var descElem = document.getElementById('cal-modal-desc'); 
+    if (descElem) descElem.innerHTML = ev.desc ? esc(ev.desc) : 'Sem descrição disponível para este item.';
+    
     if (modalOverlay) modalOverlay.style.display = 'flex';
   };
 
@@ -1299,20 +1368,6 @@ document.addEventListener('DOMContentLoaded', function () {
   if (modalOverlay) modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) { modalOverlay.style.display = 'none'; } });
   var calPrev = document.getElementById('cal-prev'); if (calPrev) calPrev.addEventListener('click', function () { calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1); renderCalendario(); });
   var calNext = document.getElementById('cal-next'); if (calNext) calNext.addEventListener('click', function () { calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1); renderCalendario(); });
-
-  var optKanban = document.getElementById('opt-kanban-board');
-  if (optKanban) {
-    optKanban.addEventListener('click', function (e) {
-      var card = e.target.closest('.kanban-card'); if (!card) return;
-      var optId = card.getAttribute('data-opt-id'); var data = OPT_CATALOGUE[optId]; if (!data) return;
-      window.openEventDetailsModal({
-        title: data.title + ' (' + data.code + ')',
-        type: 'Departamento: ' + data.dept,
-        date: data.hours + ' · ' + data.credits + ' Créditos',
-        desc: data.desc
-      }, true, data.color);
-    });
-  }
 
   /* ===== BACKUPS E ADMIN ===== */
   var KEYS = ['bp_faltas', 'bp_rooms', 'bp_opt', 'bp_plan', 'bp_curperiod', 'bp_notes', 'bp_evals', 'bp_comp', 'bp_agenda', 'bp_theme', 'bp_dataversion', 'bp_expanded', 'bp_removed'];

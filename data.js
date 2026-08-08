@@ -1,18 +1,6 @@
+
 /* ============================================================
    DATA.JS — Dados Estáticos e Matrizes Curriculares (BioPulse)
-   
-   ÍNDICE E ESTRUTURA DO ARQUIVO:
-   1. TOTAL DE HORAS DO CURSO (Linha 16)
-   2. MATRIZ CURRICULAR DO 1º PERÍODO / SEM1 (Linha 20)
-   3. MATRIZ CURRICULAR DOS PERÍODOS 2 AO 9 / SEMS (Linha 32)
-   4. LISTA DE OPTATIVAS PARA O PAINEL (Linha 105)
-   5. GRAFO DE PRÉ-REQUISITOS (Nós e Arestas) (Linha 118)
-   6. CARGA HORÁRIA DAS OPTATIVAS DO PLANEJADOR (Linha 140)
-   7. GRADE DE HORÁRIOS PADRÃO (1º Período) (Linha 148)
-   8. DIAS LETIVOS OFICIAIS / DELIBERAÇÃO CGRAD (Linha 163)
-   9. CATÁLOGO DE EMENTAS DAS OPTATIVAS (Linha 167)
-   10. BASE DE DADOS DO CALENDÁRIO ACADÊMICO (Linha 185)
-   11. EXPOSIÇÃO GLOBAL WINDOW.BP_DATA (Linha 280)
    ============================================================ */
 
 (function () {
@@ -96,7 +84,7 @@
     ]
   };
 
-  /* ---- 4. Lista de optativas (dropdown da aba Notas) ---- */
+  /* ---- 4. Lista de optativas ---- */
   var OPTATIVAS = [
     'Biomimética (30 h/a)', 'Inglês Instrumental I (30 h/a)', 'Inglês Instrumental II (30 h/a)',
     'Biotelemetria (60 h/a)', 'Biotecnologia Médica (30 h/a)', 'Proteínas Recombinantes (30 h/a)',
@@ -122,7 +110,7 @@
     { id: 'empr', n: 'Empreendedorismo', p: 8, row: 3, opt: true }
   ];
 
-  /* ---- Arestas do grafo (pré-requisito -> destrava) ---- */
+  /* ---- Arestas do grafo ---- */
   var GEDGES = [
     ['bioq', 'bioqa'], ['bioqa', 'bmol'], ['bioqa', 'prot'], ['bmol', 'prot'], ['bmol', 'eng'],
     ['fis', 'btele'], ['fis', 'paras'], ['gen', 'gena'], ['gena', 'farmg'], ['farm', 'farmg'],
@@ -130,7 +118,7 @@
     ['imb', 'ima'], ['ing1', 'ing2']
   ];
 
-  /* ---- 6. Carga horária das optativas do planejador (por nome do nó) ---- */
+  /* ---- 6. Carga horária das optativas ---- */
   var CH_BY_NAME = {
     'Biomimética': 30, 'Inglês Instrumental I': 30, 'Inglês Instrumental II': 30, 'Biotelemetria': 60,
     'Biotec. Médica': 30, 'Proteínas Recomb.': 30, 'Eng. Genética': 30, 'Farmacogenética': 30,
@@ -158,14 +146,63 @@
     ]
   };
 
-  /* ---- 8. Dias letivos oficiais por mês (Deliberação CGRAD 25/2026) ---- */
+  /* ---- 8. Dias letivos oficiais por mês ---- */
   var MONTHLY_DAYS_OFICIAL = { 7: 0, 8: 22, 9: 25, 10: 25, 11: 22, 12: 6 };
 
-  /* ---- 9. Catálogo de ementas das optativas (modal do Kanban) ---- */
+  /* ---- 9. Catálogo de ementas das OBRIGATÓRIAS ---- */
+  var OBR_CATALOGUE = {
+    bioe1: { code: 'G00BIOE1.01', title: 'Bioestatística I', dept: 'DECOM', hours: '30 h/a', credits: '2', color: '--decom-color', desc: 'Estatística aplicada às ciências biológicas. Apresentação de dados, medidas de tendência central e dispersão, distribuições de probabilidade, testes de hipóteses e introdução ao software R.' },
+    bcel: { code: 'G00BCEL0.01', title: 'Biologia Celular', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Organização estrutural e funcional das células procarióticas e eucarióticas. Membrana plasmática, transporte transmembrana, organelas, citoesqueleto, fluxo de informação genética e ciclo celular.' },
+    quim: { code: 'G00QUIM1.01', title: 'Química Geral', dept: 'DEQUI', hours: '60 h/a', credits: '4', color: '--dequi-color', desc: 'Estrutura atômica, tabela periódica, ligações químicas, geometria molecular, forças intermoleculares, estequiometria, soluções e introdução ao equilíbrio químico em sistemas aquosos.' },
+    bfla: { code: 'G00BFLA0.01', title: 'Biossegurança e Fundamentos de Laboratório', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', desc: 'Níveis de biossegurança (NB-1 a NB-4), boas práticas de laboratório, manuseio de agentes biológicos, gerenciamento de resíduos químicos e biológicos e legislação de biossegurança no Brasil.' },
+    lqui: { code: 'G00LQUI1.01', title: 'Laboratório de Química Geral', dept: 'DEQUI', hours: '30 h/a', credits: '2', color: '--dequi-color', desc: 'Técnicas fundamentais de laboratório: pesagem, volumetria, preparo de soluções, titulação, filtração e purificação de substâncias. Segurança e tratamento de resíduos.' },
+    cspb: { code: 'G00CSPB0.01', title: 'Contexto Social e Profissional da Biotecnologia', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', desc: 'História e evolução da biotecnologia, campos de atuação do bacharel, ecossistema de inovação, bioeconomia e o impacto social das novas tecnologias biológicas.' },
+    fite: { code: 'G00FITE0.01', title: 'Filosofia da Tecnologia', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', desc: 'Reflexão crítica sobre o desenvolvimento científico e tecnológico. A relação entre sociedade, técnica, ser humano e meio ambiente na era da pós-genômica.' },
+    paor: { code: 'G00PAOR0.01', title: 'Psicologia Aplicada às Organizações', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', desc: 'Comportamento humano no trabalho, motivação, liderança, trabalho em equipe multidisciplinar e relações interpessoais em ambientes de pesquisa e inovação.' },
+    bioe2: { code: 'G00BIOE2.01', title: 'Bioestatística II', dept: 'DECOM', hours: '30 h/a', credits: '2', color: '--decom-color', desc: 'Análise de variância (ANOVA), regressão linear simples e múltipla, testes não paramétricos e planejamento de experimentos biológicos.' },
+    hghu: { code: 'G00HGHU0.01', title: 'Histologia Geral Humana', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Estudo microscópico dos tecidos epitelial, conjuntivo, muscular e nervoso. Correlação entre estrutura tecidual, função biológica e diferenciação celular.' },
+    epco: { code: 'G00EPCO1.01', title: 'Estrutura e Propriedades dos Compostos Orgânicos', dept: 'DEQUI', hours: '60 h/a', credits: '4', color: '--dequi-color', desc: 'Funções orgânicas, hibridização, estereoquímica, propriedades físico-químicas e reatividade de moléculas orgânicas de interesse biológico.' },
+    srbi: { code: 'G00SRBI0.01', title: 'Segurança e Regulamentação em Biotecnologia', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', desc: 'Legislação brasileira sobre organismos geneticamente modificados (Lei de Biossegurança), CTNBio, patentes biológicas e propriedade intelectual.' },
+    soci: { code: 'G00INSO0.01', title: 'Introdução à Sociologia', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', desc: 'Conceitos sociológicos fundamentais, transformações do trabalho, globalização, ética pública e dinâmicas sociais contemporâneas.' },
+    mcie: { code: 'G00MCIE1.01', title: 'Metodologia Científica', dept: 'DCSA', hours: '30 h/a', credits: '2', color: '--dcsa-color', desc: 'Estruturação do conhecimento científico, elaboração de projetos de pesquisa, busca em bases de dados bibliográficas e normas de redação técnica ABNT.' },
+    mger: { code: 'G00MGER0.01', title: 'Microbiologia Geral', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Morfologia, fisiologia, genética e taxonomia de bactérias, fungos, vírus e arqueias. Técnicas de isolamento, cultivo e controle de crescimento microbiano.' },
+    bioe: { code: 'G00BETI0.01', title: 'Bioética', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', desc: 'Princípios da bioética em pesquisas com seres humanos e animais, edição gênica, clonagem, células-tronco e comitês de ética em pesquisa (CEP/CEUA).' },
+    bioq: { code: 'G00BBAS0.01', title: 'Bioquímica Básica', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Estrutura e função de biomoléculas: aminoácidos, proteínas, carboidratos, lipídeos e ácidos nucleicos. Enzimologia e cinética catalítica.' },
+    gen: { code: 'G00GBC10.01', title: 'Genética Básica e Citogenética', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Mendelismo, hereditariedade cromossômica, ligação gênica, mapeamento, citogenética humana e estrutura dos cromossomos.' },
+    imic: { code: 'G00IMIC0.01', title: 'Instrumentação em Microbiologia', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', desc: 'Equipamentos e metodologias analíticas em laboratórios de microbiologia: microscopia avançada, autoclave, espectrofotometria e citometria de fluxo.' },
+    imb: { code: 'G00IBAS0.01', title: 'Imunologia Básica', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Sistema imunológico inato e adaptativo. Células, órgãos linfoides, anticorpos, citocinas, complexo principal de histocompatibilidade (MHC) e resposta imune.' },
+    mpes: { code: 'G00MPES0.05', title: 'Metodologia da Pesquisa', dept: 'DCSA', hours: '30 h/a', credits: '2', color: '--dcsa-color', desc: 'Redação científica avançada, elaboração de relatórios técnicos, artigos científicos, submissão de projetos a órgãos de fomento (FAPEMIG/CNPq).' },
+    fghu: { code: 'G00FGHU0.01', title: 'Fisiologia Geral Humana', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Funcionamento integrado dos sistemas renal, cardiovascular, respiratório, digestório, endócrino e nervoso no corpo humano.' },
+    qate: { code: 'G00QATE0.01', title: 'Química Analítica Teórica', dept: 'DEQUI', hours: '30 h/a', credits: '2', color: '--dequi-color', desc: 'Princípios do equilíbrio químico aplicados à análise quantitativa: gravimetria, titulação ácido-base, complexometria e precipitação.' },
+    qapr: { code: 'G00QAPR0.01', title: 'Química Analítica Prática', dept: 'DEQUI', hours: '30 h/a', credits: '2', color: '--dequi-color', desc: 'Práticas de análise quantitativa clássica em laboratório, padronização de reagentes e aferição de precisão analítica.' },
+    ima: { code: 'G00IAPL0.01', title: 'Imunologia Aplicada', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', desc: 'Imunodiagnóstico (ELISA, Western Blot, imunofluorescência), produção de anticorpos monoclonais e imunoterapia.' },
+    bap: { code: 'G00BQAP0.01', title: 'Bioquímica Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Metabolismo intermediário: glicólise, ciclo de Krebs, cadeia respiratória, metabolização de lipídeos, proteínas e regulação metabólica.' },
+    genap: { code: 'G00GEAP0.01', title: 'Genética Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Genética de populações, genética quantitativa, melhoramento genético de espécies e conservação de recursos genéticos.' },
+    farm: { code: 'G00FFAR0.01', title: 'Fundamentos em Farmacologia', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Farmacocinética (absorção, distribuição, biotransformação e excreção) e farmacodinâmica (mecanismos de ação de fármacos em receptores).' },
+    bioinf: { code: 'G00IBIO0.01', title: 'Introdução à Bioinformática', dept: 'DECOM', hours: '60 h/a', credits: '4', color: '--decom-color', desc: 'Algoritmos de alinhamento de sequências (BLAST), bancos de dados biológicos (GenBank/UniProt), filogenia molecular e análise proteômica.' },
+    mveg: { code: 'G00MVEG0.01', title: 'Morfofisiologia Vegetal', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Anatomia e fisiologia das plantas: fotossíntese, nutrição mineral, transporte de seiva, hormônios vegetais e adaptações estressantes.' },
+    bmol: { code: 'G00BMAP0.01', title: 'Biologia Molecular Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Técnicas de DNA recombinante, PCR, clonagem de genes, eletroforese, bibliotecas genômicas e sequenciamento de DNA.' },
+    paras: { code: 'G00PAPL0.01', title: 'Parasitologia Aplicada', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Biologia de protozoários e helmintos de interesse médico e veterinário. Ciclos biológicos, relação parasito-hospedeiro e diagnóstico molecular.' },
+    bveg: { code: 'G00BVEG0.01', title: 'Biotecnologia Vegetal', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Cultura de tecidos vegetais, micropropagação, transformação genética de plantas (Agrobacterium) e produção de metabólitos secundários.' },
+    bani: { code: 'G00BANI0.01', title: 'Biotecnologia Animal', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Tecnologias de reprodução assistida, fertilização in vitro, animais transgênicos, vetores virais e terapia celular animal.' },
+    biof: { code: 'G00BIOF0.01', title: 'Biofísica', dept: 'DF', hours: '60 h/a', credits: '4', color: '--df-color', desc: 'Fenômenos físicos em sistemas biológicos: bioeletricidade, potenciais de membrana, radiação ionizante, termodinâmica biológica e óptica.' },
+    enme: { code: 'G00ENME0.01', title: 'Engenharia Metabólica', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Redes metabólicas, análise de fluxo celular, otimização de vias biossintéticas e redesign de microrganismos para bioprocessos industriais.' },
+    nano: { code: 'G00NBIO0.01', title: 'Nanobiotecnologia', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', desc: 'Síntese de nanomateriais biológicos, nanocarreadores de fármacos, biossensores miniaturizados e interação nano-bio.' },
+    bhum: { code: 'G00BHUM0.01', title: 'Biotecnologia Humana', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Aplicações da biotecnologia na medicina: medicina regenerativa, células-tronco, diagnóstico molecular avançado e engenharia de tecidos.' },
+    etox: { code: 'G00ETOX0.01', title: 'Ecotoxicologia', dept: 'DCTA', hours: '60 h/a', credits: '4', color: '--dcta-color', desc: 'Efeitos de contaminantes químicos e poluentes nos ecossistemas, ensaios de toxicidade com organismos-teste e biorremediação ambiental.' },
+    tfbi: { code: 'G00TFBI0.01', title: 'Tecnologia de Fermentações e Bioprocessos', dept: 'DEBIO', hours: '60 h/a', credits: '4', color: '--debio-color', desc: 'Biorreatores, cinética de fermentação industrial, processos upstream e downstream, esterilização e escala industrial.' },
+    gpge: { code: 'G00GPGE0.01', title: 'Genômica e Pós-Genômica', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', desc: 'Sequenciamento de nova geração (NGS), transcriptômica, proteômica, metabolômica e biologia de sistemas.' },
+    empr_reg: { code: 'G00EMPN0.01', title: 'Empreendedorismo – Modelo e Plano de Negócios', dept: 'DCSA', hours: '60 h/a', credits: '4', color: '--dcsa-color', desc: 'Modelagem de negócios inovadores em biotecnologia (Canvas), planejamento financeiro, pitching, captação de recursos e criação de startups.' },
+    tcc1: { code: 'G00ATCC1.03', title: 'Atividade de TCC I', dept: 'DEBIO', hours: '15 h/a', credits: '1', color: '--debio-color', desc: 'Elaboração e defesa do projeto de monografia de final de curso perante a comissão examinadora.' },
+    estag_sup: { code: 'G00AESU0.02', title: 'Atividade de Estágio Supervisionado', dept: 'DCSA', hours: '15 h/a', credits: '1', color: '--dcsa-color', desc: 'Atividade prática supervisionada desenvolvida em empresas, indústrias, laboratórios ou centros de pesquisa credenciados.' },
+    tcc2: { code: 'G00ATCC2.03', title: 'Atividade de TCC II', dept: 'DEBIO', hours: '15 h/a', credits: '1', color: '--debio-color', desc: 'Desenvolvimento do trabalho experimental/teórico, redação final da monografia e defesa pública perante banca avaliadora.' }
+  };
+
+  /* ---- 10. Catálogo de ementas das OPTATIVAS ---- */
   var OPT_CATALOGUE = {
     biom: { code: 'G00BIOM0.01', title: 'Biomimética', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Nenhum', desc: 'Princípios e leis de organização dos sistemas biológicos como modelos para engenharia e design. Estudo de superfícies funcionais, biossensores mecânicos e estruturas adaptativas inspiradas na fauna e flora.' },
     empr: { code: 'G00EOC00.01', title: 'Empreendedorismo para Organizações Criativas', dept: 'DCSA', hours: '60 h/a', credits: '4', color: '--dcsa-color', prereqs: 'Nenhum', desc: 'Gestão de negócios voltados às indústrias biotecnológicas e criativas. Elaboração de planos de negócios, captação de recursos de inovação tecnológica, estruturação de startups (spin-offs acadêmicas) e propriedade intelectual.' },
-    ing1: { code: 'G00IIN10.01', title: 'Inglês Instrumental I', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Desenvolvimento de competência leitora de artigos científicos e especificações técnicas de bioinformática e química na língua inglesa. Análise lexical e sintática aplicada ao discurso acadêmico internacional.' },
+    ing1: { code: 'G00IIN10.01', title: 'Inglês Instrumental I', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Desenvolvimento de competência leitora de artigos científicos e especificações técnicas de bioinformática e química na língua inglesa. Análise lexical e sintática aplicada ao discurso acadômico internacional.' },
     libr: { code: 'G00LIBR0.01', title: 'Língua Brasileira de Sinais - Libras I', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Aspectos históricos, sociolinguísticos e culturais da surdez e da comunidade surda brasileira. Aquisição de vocabulário e estruturas sintáticas básicas de comunicação científica em Libras.' },
     semi: { code: 'G00FSE00.01', title: 'Fundamentos de Semiótica', dept: 'DCSF', hours: '30 h/a', credits: '2', color: '--dcsf-color', prereqs: 'Nenhum', desc: 'Teorias do signo, representação e significação na ciência moderna. Leitura crítica de símbolos científicos, diagramas metabólicos e semiose na produção e transmissão de dados genômicos.' },
     bta: { code: 'G00BTA00.01', title: 'Biotecnologia Aplicada à Microbiologia', dept: 'DETEQ', hours: '60 h/a', credits: '4', color: '--deteq-color', prereqs: 'Microbiologia Geral (G00MBG)', desc: 'Manipulação e cultivo de fungos, leveduras e bactérias industriais. Fermentações em estado sólido e líquido, seleção de cepas selvagens e modificadas por mutagênese ou engenharia para síntese de bioativos.' },
@@ -178,7 +215,7 @@
     prot: { code: 'G00PRR00.01', title: 'Proteínas Recombinantes', dept: 'DEBIO', hours: '30 h/a', credits: '2', color: '--debio-color', prereqs: 'Bioquímica Aplicada (G00BQA) + Biologia Molecular Aplicada (G00BMA)', desc: 'Desenvolvimento de vetores de expressão e transformação em sistemas hospedeiros (E. coli, leveduras e células de mamíferos). Estratégias de engenharia de proteínas por evolução dirigida para aumento de estabilidade catalítica.' }
   };
 
-  /* ---- 10. Calendário acadêmico 2026.2 (CGRAD 25/2026) ---- */
+  /* ---- 11. Calendário acadêmico 2026.2 ---- */
   var CALENDAR_DB = [
     { date: '2026-08-01', title: 'Férias Escolares (Término)', type: 'Feriados & Recessos', oficial: true, desc: 'Fim do recesso escolar de inverno decretado pelo Colegiado de Ensino, Pesquisa e Extensão (CEPE).' },
     { date: '2026-08-02', title: '2ª Fase de Matrícula (Término)', type: 'Matrículas & Ajustes', oficial: true, desc: 'Fim do prazo para os alunos veteranos solicitarem reserva de vagas extras diretamente pelo SIGAA.' },
@@ -273,7 +310,7 @@
     { date: '2026-12-31', title: 'Recesso de Ano Novo', type: 'Feriados & Recessos', oficial: true, desc: 'Véspera de Confraternização Universal. Campus inativo.' }
   ];
 
-  /* ---- 11. Exposição Global do Módulo ---- */
+  /* ---- 12. Exposição Global do Módulo ---- */
   window.BP_DATA = {
     TOTAL_HA: TOTAL_HA,
     SEM1: SEM1,
@@ -284,6 +321,7 @@
     CH_BY_NAME: CH_BY_NAME,
     SCHED: SCHED,
     MONTHLY_DAYS_OFICIAL: MONTHLY_DAYS_OFICIAL,
+    OBR_CATALOGUE: OBR_CATALOGUE,
     OPT_CATALOGUE: OPT_CATALOGUE,
     CALENDAR_DB: CALENDAR_DB
   };
