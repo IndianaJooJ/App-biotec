@@ -29,10 +29,13 @@ window.BP_BLOG = (function () {
     return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
   }
 
+ /* Registra a reação de Like ou Dislike evitando duplicidade local */
   async function reagirPost(postId, tipo) {
     if (!supabaseClient) return;
 
-    var storageKey = 'bp_voto_post_' + postId;
+    var targetId = parseInt(postId, 10);
+    var storageKey = 'bp_voto_post_' + targetId;
+
     if (localStorage.getItem(storageKey)) {
       alert("Você já reagiu a este artigo!");
       return;
@@ -40,7 +43,7 @@ window.BP_BLOG = (function () {
 
     try {
       var { error } = await supabaseClient.rpc('reacao_post', {
-        post_id_param: postId,
+        post_id_param: targetId,
         tipo_reacao: tipo
       });
 
@@ -49,16 +52,17 @@ window.BP_BLOG = (function () {
       localStorage.setItem(storageKey, tipo);
       
       if (typeof window.trackEvent === 'function') {
-        window.trackEvent('reagir_post_blog', { post_id: postId, tipo: tipo });
+        window.trackEvent('reagir_post_blog', { post_id: targetId, tipo: tipo });
       }
 
       await fetchAndRenderPosts();
       
-      if (activePostIdForComments === postId) {
-        updateModalReacoes(postId);
+      if (activePostIdForComments === targetId) {
+        updateModalReacoes(targetId);
       }
     } catch (err) {
       console.error("Erro ao registrar reação:", err);
+      alert("Não foi possível registrar o seu voto no momento.");
     }
   }
 
