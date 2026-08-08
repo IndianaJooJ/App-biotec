@@ -1,242 +1,21 @@
-/* ===== RASTREADOR AVANÇADO DE EVENTOS (GA4 + Vercel Insights) ===== */
-  window.trackEvent = function (eventName, eventParams) {
-    eventParams = eventParams || {};
-    
-    // 1. Envia para o Google Analytics 4 (gtag.js)
+/* ============================================================
+   APP.JS — Lógica do BioPulse (Painel de Formação em Biotecnologia)
+   ============================================================ */
+
+/* ===== RASTREADOR AVANÇADO DE EVENTOS GLOBAL (GA4 + Vercel Insights) ===== */
+window.trackEvent = function (eventName, eventParams) {
+  eventParams = eventParams || {};
+  try {
     if (typeof window.gtag === 'function') {
       window.gtag('event', eventName, eventParams);
     }
-    
-    // 2. Envia para o Vercel Analytics (va)
     if (typeof window.va === 'function') {
       window.va('event', { name: eventName, data: eventParams });
     }
-  };
-
-  // Monitora a troca de abas (Páginas Virtuais)
-  links.forEach(function (b) {
-    b.addEventListener('click', function () {
-      var p = b.getAttribute('data-page');
-      
-      // Dispara visualização de página virtual no GA4 e Vercel
-      trackEvent('page_view_custom', {
-        page_title: 'BioPulse — ' + p.toUpperCase(),
-        page_location: window.location.href + '#' + p,
-        page_path: '/' + p
-      });
-
-      links.forEach(function (x) { x.classList.toggle('active', x === b); });
-      pages.forEach(function (pg) { pg.classList.toggle('on', pg.id === 'page-' + p); });
-      scrollTo({ top: 0, behavior: 'smooth' });
-      observeReveals();
-      setTimeout(function () {
-        P.resizeAll();
-        if (p === 'painel') renderVisao();
-        if (p === 'calendario') renderCalendario();
-      }, 90);
-    });
-  });
-
-  // Rastreia alteração de faltas
-  var f = target.closest('button[data-f]');
-  if (f) {
-    var k2 = f.getAttribute('data-f'), d = parseInt(f.getAttribute('data-d'), 10);
-    faltas[k2] = Math.max(0, (faltas[k2] || 0) + d);
-    store.set('bp_faltas', faltas);
-    
-    // Evento de rastreamento
-    trackEvent('alterar_faltas', { materia_key: k2, direcao: d > 0 ? 'incremento' : 'decremento' });
-    
-    renderNotas(); renderVisao(); flashSave(); return;
+  } catch (e) {
+    console.warn('Erro ao enviar evento de analytics:', e);
   }
-
-  // Rastreia onboarding / tutorial
-  function openOnboarding() {
-    currentSlide = 1;
-    updateSlideDisplay();
-    if (onboardingOverlay) onboardingOverlay.classList.add('open');
-    trackEvent('onboarding_aberto', { categoria: 'Engajamento' });
-  }
-
-  /* ===== 1. ALTERNAR TEMA (CLARO/ESCURO) ===== */
-  var themeTg = document.getElementById('theme-tg');
-  if (themeTg) {
-    themeTg.addEventListener('click', function () {
-      theme = (theme === 'dark' ? 'light' : 'dark');
-      store.set('bp_theme', theme);
-      applyTheme(theme);
-      
-      // EVENTO 1: Alternar Tema
-      trackEvent('alternar_tema', { tema: theme });
-    });
-  }
-
-  /* ===== 2. SELEÇÃO DE PERÍODO NO PAINEL ===== */
-  function setPeriod(p) {
-    curPeriod = p;
-    store.set('bp_curperiod', curPeriod);
-    curSem = String(curPeriod);
-    buildPeriodMenu();
-    renderNotas();
-    renderVisao();
-    renderHorarios();
-    flashSave();
-
-    // EVENTO 2: Troca de Período
-    trackEvent('trocar_periodo_painel', { periodo_selecionado: p });
-  }
-
-  /* ===== 3 & 4. ADICIONAR E EXCLUIR AVALIAÇÃO DE DISCIPLINA ===== */
-  // Dentro do EventListener do gradeListContainer:
-  if (target.classList.contains('ev-btn-add')) {
-    var form = target.closest('.eval-add');
-    var k3 = form.getAttribute('data-k');
-    var nome = form.querySelector('.add-nome').value || 'Avaliação';
-    var data = form.querySelector('.add-data').value || '';
-    var notaVal = form.querySelector('.add-nota').value;
-    if (notaVal === '' || isNaN(parseFloat(notaVal))) return;
-    
-    evals[k3] = evals[k3] || [];
-    evals[k3].push({ nome: nome, data: data, nota: Math.max(0, Math.min(100, parseFloat(notaVal))) });
-    store.set('bp_evals', evals);
-    
-    // EVENTO 3: Adicionar Avaliação
-    trackEvent('adicionar_avaliacao', { materia_key: k3, nota: notaVal, nome_eval: nome });
-
-    renderNotas(); renderVisao(); flashSave(); return;
-  }
-
-  var xr = target.closest('.ev-x');
-  if (xr) { 
-    var dataVal = xr.getAttribute('data-evx'); 
-    var parts = dataVal.split('|'); 
-    var key = parts[0] + '|' + parts[1]; 
-    var index = parseInt(parts[2], 10); 
-    if (evals[key]) { 
-      evals[key].splice(index, 1); 
-      store.set('bp_evals', evals); 
-
-      // EVENTO 4: Excluir Avaliação
-      trackEvent('excluir_avaliacao', { materia_key: key });
-
-      renderNotas(); renderVisao(); 
-    } 
-    return; 
-  }
-
-  /* ===== 5, 6 & 7. GESTÃO DE MATÉRIAS DA GRADE (ADIÇÃO, REMOÇÃO E RESTAURAÇÃO) ===== */
-  // Na função tentarAdicionarMateria():
-  addedOpt[curSem] = addedOpt[curSem] || [];
-  if (addedOpt[curSem].indexOf(nomeMateria) === -1) {
-    addedOpt[curSem].push(nomeMateria);
-    store.set('bp_opt', addedOpt);
-
-    // EVENTO 5: Adicionar Matéria Customizada ou Optativa
-    trackEvent('adicionar_materia_custom', { materia_nome: nomeMateria, periodo: curSem });
-  }
-
-  // No evento de remoção de matéria da grade:
-  if (rmBtn) {
-    // ... código de exclusão ...
-    store.set('bp_faltas', faltas); store.set('bp_notes', notes); store.set('bp_evals', evals);
-    
-    // EVENTO 6: Remover Matéria da Grade
-    trackEvent('remover_materia_grade', { materia_nome: name, periodo: curSem });
-
-    renderNotas(); renderVisao(); flashSave(); return;
-  }
-
-  // No evento do botão restaurar grade padrão:
-  if (restoreBtn) {
-    restoreBtn.addEventListener('click', function() {
-      if (confirm('Deseja restaurar a grade padrão do ' + curPeriod + 'º período?')) {
-        delete addedOpt[curSem];
-        delete removedSubjs[curSem];
-        store.set('bp_opt', addedOpt);
-        store.set('bp_removed', removedSubjs);
-
-        // EVENTO 7: Restaurar Grade Padrão
-        trackEvent('restaurar_grade_padrao', { periodo: curSem });
-
-        renderNotas(); renderVisao(); flashSave();
-      }
-    });
-  }
-
-  /* ===== 8. INTERAÇÃO NO GRAFO DE PRÉ-REQUISITOS ===== */
-  function selectGraph(id) {
-    gselected = id;
-    applyGraphSel();
-    var nd = nodeOf(id);
-    var rel = relatives(id);
-    // ... preenchimento do painel lateral ...
-
-    // EVENTO 8: Seleção no Grafo de Pré-requisitos
-    if (nd) {
-      trackEvent('selecionar_no_grafo', { materia_id: id, materia_nome: nd.n, periodo: nd.p });
-    }
-  }
-
-  /* ===== 9. PLANEJADOR ARRASTÁVEL (DRAG & DROP DE OPTATIVAS) ===== */
-  // Na função attachDnD():
-  col.addEventListener('drop', function (e) {
-    e.preventDefault();
-    col.classList.remove('over');
-    if (dragId === null) return;
-    var targetP = parseInt(col.getAttribute('data-p'), 10);
-    plan[dragId] = targetP;
-    store.set('bp_plan', plan);
-
-    // EVENTO 9: Arrastar Optativa no Planejador
-    trackEvent('arrastar_optativa_planejador', { optativa_id: dragId, periodo_destino: targetP });
-
-    dragId = null;
-    renderPlanner();
-    flashSave();
-  });
-
-  /* ===== 10. ADICIONAR COMPROMISSO NA AGENDA PESSOAL ===== */
-  // No manipulador de eventos da agenda (#ag-add):
-  if (a) {
-    var date = document.getElementById('ag-date').value;
-    var title = document.getElementById('ag-title').value;
-    var type = document.getElementById('ag-type').value;
-    var desc = document.getElementById('ag-desc').value;
-    if (!title) { alert('Por favor, informe o título do evento.'); return; }
-    
-    agenda.push({ date: date, title: title, type: type, desc: desc });
-    store.set('bp_agenda', agenda);
-
-    // EVENTO 10: Adicionar Compromisso na Agenda
-    trackEvent('adicionar_evento_agenda', { titulo_evento: title, tipo: type, data_evento: date });
-
-    renderAgenda(); renderVisao(); flashSave(); return;
-  }
-
-/* ============================================================
-   APP.JS — Lógica do BioPulse (Painel de Formação em Biotecnologia)
-   
-   ÍNDICE E ESTRUTURA DO ARQUIVO:
-   01. PONTES COM MÓDULOS EXTERNOS & STORE
-   02. VERSIONAMENTO E MIGRAÇÃO DE DADOS LOCAIS
-   03. TEMA CLARO / ESCURO & BOTÃO FERRAMENTAS
-   04. EFEITOS VISUAIS (Glow, Barra de Progresso, Reveal)
-   05. CANVAS DE PARTÍCULAS DE FUNDO & NAVEGAÇÃO
-   06. GRAFO DE PRÉ-REQUISITOS (Lógica de Seleção)
-   07. HELPERS DE CURRÍCULO E VALIDAÇÕES ACADÊMICAS
-   08. CÁLCULO DE CRA REAL, HORAS INTEGRALIZADAS E GRÁFICO SVG
-   09. SELETOR DE PERÍODO & MENU DROPDOWN DO PAINEL
-   10. ACOMPANHAMENTO DE NOTAS, FALTAS E CARDS (COM ÍCONE DE LIXEIRA)
-   11. ADIÇÃO E CUSTOMIZAÇÃO DA GRADE (DEPARTAMENTOS CORRETOS)
-   12. QUADRO DE HORÁRIOS, SALAS E FILTRO T1/T2
-   13. PAINEL VISÃO GERAL INTEGRADO E DINÂMICO
-   14. AGENDA DE EVENTOS & HORAS COMPLEMENTARES
-   15. PLANEJADOR DE OPTATIVAS (Drag and Drop)
-   16. CALENDÁRIO ACADÊMICO E EMENTAS KANBAN
-   17. SUB-ABAS DA GRADE OBRIGATÓRIA / OPTATIVAS
-   18. TUTORIAL INTERATIVO / ONBOARDING
-   19. INICIALIZAÇÃO DO SISTEMA (INIT)
-   ============================================================ */
+};
 
 document.addEventListener('DOMContentLoaded', function () {
   "use strict";
@@ -308,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
       theme = (theme === 'dark' ? 'light' : 'dark');
       store.set('bp_theme', theme);
       applyTheme(theme);
+      window.trackEvent('alternar_tema', { tema: theme });
     });
   }
 
@@ -368,6 +148,13 @@ document.addEventListener('DOMContentLoaded', function () {
   links.forEach(function (b) {
     b.addEventListener('click', function () {
       var p = b.getAttribute('data-page');
+      
+      window.trackEvent('page_view_custom', {
+        page_title: 'BioPulse — ' + p.toUpperCase(),
+        page_location: window.location.href + '#' + p,
+        page_path: '/' + p
+      });
+
       links.forEach(function (x) { x.classList.toggle('active', x === b); });
       pages.forEach(function (pg) { pg.classList.toggle('on', pg.id === 'page-' + p); });
       scrollTo({ top: 0, behavior: 'smooth' });
@@ -489,12 +276,16 @@ document.addEventListener('DOMContentLoaded', function () {
     html += '<div class="glab u">Ramos — destrava depois</div>';
     html += rel.unlocks.length ? rel.unlocks.map(function (x) { return '<span class="gchip">' + nameOf(x) + '</span>'; }).join('') : '<span class="ginfo" style="font-size:12px">Não destrava outras (neste recorte).</span>';
     document.getElementById('gside-list').innerHTML = html;
+
+    if (nd) {
+      window.trackEvent('selecionar_no_grafo', { materia_id: id, materia_nome: nd.n, periodo: nd.p });
+    }
   }
 
   /* ===== 07. HELPERS DE CURRÍCULO E VALIDAÇÕES ACADÊMICAS ===== */
   var faltas = store.get('bp_faltas', {}), rooms = store.get('bp_rooms', {});
   var addedOpt = store.get('bp_opt', {}); if (Array.isArray(addedOpt)) { addedOpt = { '1': addedOpt }; store.set('bp_opt', addedOpt); }
-  var removedSubjs = store.get('bp_removed', {}); // Armazena matérias excluídas manualmente por semestre
+  var removedSubjs = store.get('bp_removed', {});
   var notes = store.get('bp_notes', {});
   var evals = store.get('bp_evals', {});
   var curPeriod = store.get('bp_curperiod', 1);
@@ -507,10 +298,8 @@ document.addEventListener('DOMContentLoaded', function () {
   function chFromName(n) { var m = n.match(/(\d+)\s*h\/a/); return m ? parseInt(m[1], 10) : 30; }
   function editableSem(sem) { return parseInt(sem, 10) <= curPeriod; }
 
-  // Procura departamento por nome de matéria em todo o catálogo oficial
   function findDeptForSubject(nome) {
     if (!nome) return 'deteq';
-    // Limpa sufixos de CH se houver
     var cleanName = nome.replace(/\s*\(\d+\s*h\/a\)/i, '').trim();
 
     for (var i = 0; i < SEM1.length; i++) {
@@ -541,19 +330,11 @@ document.addEventListener('DOMContentLoaded', function () {
       rawList = (SEMS[sem] || []).map(function (a) { return { cod: a[2] || '', nome: a[0], ch: a[1], dept: a[3] || '' }; });
     }
 
-    // Inclui matérias adicionadas customizadas/optativas
     (addedOpt[sem] || []).forEach(function (name) {
       var d = findDeptForSubject(name);
-      rawList.push({ 
-        cod: 'CUSTOM', 
-        nome: name, 
-        ch: chFromName(name), 
-        opt: true, 
-        dept: d 
-      });
+      rawList.push({ cod: 'CUSTOM', nome: name, ch: chFromName(name), opt: true, dept: d });
     });
 
-    // Exclui matérias removidas manualmente neste semestre
     var removedInSem = removedSubjs[sem] || [];
     return rawList.filter(function(it) {
       return removedInSem.indexOf(it.nome) === -1;
@@ -561,7 +342,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function keyOf(sem, it) { return sem + '|' + (it.cod && it.cod !== 'CUSTOM' ? it.cod : it.nome); }
-  function semTotalCH(sem) { return listFor(String(sem)).reduce(function (a, it) { return a + (it.ch || 0); }, 0); }
   function evalsFor(k) { return evals[k] || []; }
   
   function notaFinal(k) {
@@ -571,7 +351,6 @@ document.addEventListener('DOMContentLoaded', function () {
     return Math.min(100, soma);
   }
 
-  /* REGRA DE APROVAÇÃO (NOTA >= 60 E FALTAS <= LIMITE) */
   function isAprovado(sem, it) {
     var k = keyOf(String(sem), it);
     var n = notaFinal(k);
@@ -661,7 +440,6 @@ document.addEventListener('DOMContentLoaded', function () {
     svg += '<line x1="' + padL + '" y1="' + (h - padB) + '" x2="' + (w - padR) + '" y2="' + (h - padB) + '" stroke="rgba(127,224,188,.2)" stroke-width="1"/>';
     svg += '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (h - padB) + '" stroke="rgba(127,224,188,.2)" stroke-width="1"/>';
 
-    // Linha de meta 60.0 e 75.0
     var y60 = h - padB - (60 / 100) * innerH;
     var y75 = h - padB - (75 / 100) * innerH;
     svg += '<line x1="' + padL + '" y1="' + y60 + '" x2="' + (w - padR) + '" y2="' + y60 + '" stroke="rgba(231,76,60,.3)" stroke-width="1" stroke-dasharray="3 3"/>';
@@ -725,6 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
     renderVisao();
     renderHorarios();
     flashSave();
+    window.trackEvent('trocar_periodo_painel', { periodo_selecionado: p });
   }
 
   if (periodBtn && periodMenu && periodPicker) {
@@ -748,7 +527,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* SIMULADOR DO CRA & VISUALIZAÇÃO COLAPSÁVEL */
   (function () {
     var col = document.getElementById('cra-collapse');
     var tog = document.getElementById('cra-toggle');
@@ -785,7 +563,6 @@ document.addEventListener('DOMContentLoaded', function () {
     return ['Insuficiente', 'bad']; 
   }
 
-  // Ícone SVG de lixeira reutilizável
   var TRASH_ICON = '<svg class="rm-opt-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
 
   function renderNotas() {
@@ -844,14 +621,12 @@ document.addEventListener('DOMContentLoaded', function () {
     drawCra();
   }
 
-  /* LISTENER DE REMOÇÃO DE DISCIPLINA DA GRADE */
   var gradeListContainer = document.getElementById('grade-list');
   if (gradeListContainer) {
     gradeListContainer.addEventListener('click', function (e) {
       var target = e.target;
       var rmBtn = target.closest('.rm-opt');
       
-      // EXCLUSÃO DA MATÉRIA DA GRADE
       if (rmBtn) {
         e.stopPropagation();
         e.preventDefault();
@@ -875,12 +650,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         delete faltas[keyVal]; delete notes[keyVal]; delete evals[keyVal];
-        // Remove também chave por nome se diferente
         var altKey = curSem + '|' + name;
         delete faltas[altKey]; delete notes[altKey]; delete evals[altKey];
 
         store.set('bp_faltas', faltas); store.set('bp_notes', notes); store.set('bp_evals', evals);
         
+        window.trackEvent('remover_materia_grade', { materia_nome: name, periodo: curSem });
+
         renderNotas(); 
         renderVisao();
         flashSave(); 
@@ -904,13 +680,40 @@ document.addEventListener('DOMContentLoaded', function () {
         if (notaVal === '' || isNaN(parseFloat(notaVal))) return;
         evals[k3] = evals[k3] || [];
         evals[k3].push({ nome: nome, data: data, nota: Math.max(0, Math.min(100, parseFloat(notaVal))) });
-        store.set('bp_evals', evals); renderNotas(); renderVisao(); flashSave(); return;
+        store.set('bp_evals', evals);
+        
+        window.trackEvent('adicionar_avaliacao', { materia_key: k3, nota: notaVal, nome_eval: nome });
+
+        renderNotas(); renderVisao(); flashSave(); return;
       }
 
       var f = target.closest('button[data-f]');
-      if (f) { var k2 = f.getAttribute('data-f'), d = parseInt(f.getAttribute('data-d'), 10); faltas[k2] = Math.max(0, (faltas[k2] || 0) + d); store.set('bp_faltas', faltas); renderNotas(); renderVisao(); flashSave(); return; }
+      if (f) {
+        var k2 = f.getAttribute('data-f'), d = parseInt(f.getAttribute('data-d'), 10);
+        faltas[k2] = Math.max(0, (faltas[k2] || 0) + d);
+        store.set('bp_faltas', faltas);
+        
+        window.trackEvent('alterar_faltas', { materia_key: k2, direcao: d > 0 ? 'incremento' : 'decremento' });
+
+        renderNotas(); renderVisao(); flashSave(); return;
+      }
+
       var xr = target.closest('.ev-x');
-      if (xr) { var dataVal = xr.getAttribute('data-evx'); var parts = dataVal.split('|'); var key = parts[0] + '|' + parts[1]; var index = parseInt(parts[2], 10); if (evals[key]) { evals[key].splice(index, 1); store.set('bp_evals', evals); renderNotas(); renderVisao(); flashSave(); } return; }
+      if (xr) { 
+        var dataVal = xr.getAttribute('data-evx'); 
+        var parts = dataVal.split('|'); 
+        var key = parts[0] + '|' + parts[1]; 
+        var index = parseInt(parts[2], 10); 
+        if (evals[key]) { 
+          evals[key].splice(index, 1); 
+          store.set('bp_evals', evals); 
+
+          window.trackEvent('excluir_avaliacao', { materia_key: key });
+
+          renderNotas(); renderVisao(); 
+        } 
+        return; 
+      }
     });
 
     gradeListContainer.addEventListener('input', function (e) {
@@ -947,21 +750,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function tentarAdicionarMateria(nomeMateria) {
       var activeList = listFor(curSem);
       
-      // Checa se a matéria já está ativa no semestre atual
       var jaAtiva = activeList.some(function(it) { return it.nome === nomeMateria; });
       if (jaAtiva) {
         alert('A matéria "' + nomeMateria + '" já está cadastrada no semestre atual.');
         return;
       }
 
-      // Checa se já foi APROVADO em algum período anterior
       var semAprovado = isAprovadoEmSemestreAnterior(nomeMateria, curSem);
       if (semAprovado !== false) {
         alert('Não é possível adicionar: O aluno já foi APROVADO na matéria "' + nomeMateria + '" no ' + semAprovado + 'º período.');
         return;
       }
 
-      // Restauração do removedSubjs caso a matéria estivesse removida anteriormente
       if (removedSubjs[curSem]) {
         removedSubjs[curSem] = removedSubjs[curSem].filter(function(n) { return n !== nomeMateria; });
         store.set('bp_removed', removedSubjs);
@@ -971,6 +771,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (addedOpt[curSem].indexOf(nomeMateria) === -1) {
         addedOpt[curSem].push(nomeMateria);
         store.set('bp_opt', addedOpt);
+
+        window.trackEvent('adicionar_materia_custom', { materia_nome: nomeMateria, periodo: curSem });
       }
 
       renderNotas();
@@ -997,6 +799,9 @@ document.addEventListener('DOMContentLoaded', function () {
           delete removedSubjs[curSem];
           store.set('bp_opt', addedOpt);
           store.set('bp_removed', removedSubjs);
+
+          window.trackEvent('restaurar_grade_padrao', { periodo: curSem });
+
           renderNotas();
           renderVisao();
           flashSave();
@@ -1194,7 +999,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ===== 13. PAINEL VISÃO GERAL INTEGRADO E DINÂMICO ===== */
-async function renderVisaoAvisosBanner() {
+  async function renderVisaoAvisosBanner() {
     var banner = document.getElementById('vg-aviso-banner');
     var titleElem = document.getElementById('vg-aviso-title');
     var pillElem = document.getElementById('vg-aviso-pill');
@@ -1335,7 +1140,30 @@ async function renderVisaoAvisosBanner() {
 
   /* ===== 14. AGENDA DE EVENTOS & HORAS COMPLEMENTARES ===== */
   function renderAgenda() { var wrap = document.getElementById('agenda-wrap'); if(!wrap) return; var today = new Date(); today.setHours(0, 0, 0, 0); var sorted = agenda.map(function (a, i) { return { a: a, i: i }; }).sort(function (x, y) { return (x.a.date || '').localeCompare(y.a.date || ''); }); var items = sorted.length ? sorted.map(function (o) { var a = o.a; var d = a.date ? new Date(a.date + 'T00:00:00') : null; var dias = d ? Math.round((d - today) / 86400000) : null; var sub = d ? (dias > 0 ? 'em ' + dias + ' dia(s)' : (dias === 0 ? 'hoje' : Math.abs(dias) + ' dia(s) atrás')) : ''; var dim = (dias !== null && dias < 0) ? 'opacity:.55;' : ''; return '<div class="titem" style="' + dim + '"><div><div class="ti-main">' + esc(a.title) + '</div><div class="ti-sub"><span class="ti-tag">' + esc(a.type) + '</span> · ' + esc(a.date || '') + (sub ? ' · ' + sub : '') + '</div></div><span class="ti-rm" data-rm="' + o.i + '">remover</span></div>'; }).join('') : '<div class="empty">Sem eventos de agenda.</div>'; wrap.innerHTML = '<div class="addrow"><input id="ag-date" type="date"><input class="grow" id="ag-title" placeholder="Título (ex: Exame Especial - Cálculo I)"><select id="ag-type"><option>Prova</option><option>Entrega</option><option>Evento</option><option>Reunião</option><option>Outro</option></select><input class="grow" id="ag-desc" placeholder="Breve descrição opcional"><button class="add" id="ag-add">Adicionar</button></div>' + items; }
-  (function () { var w = document.getElementById('agenda-wrap'); if (w) { w.addEventListener('click', function (e) { var a = e.target.closest('#ag-add'); if (a) { var date = document.getElementById('ag-date').value; var title = document.getElementById('ag-title').value; var type = document.getElementById('ag-type').value; var desc = document.getElementById('ag-desc').value; if (!title) { alert('Por favor, informe o título do evento.'); return; } if (!date) { var td = new Date(); date = td.getFullYear() + '-' + String(td.getMonth() + 1).padStart(2, '0') + '-' + String(td.getDate()).padStart(2, '0'); } agenda.push({ date: date, title: title, type: type, desc: desc }); store.set('bp_agenda', agenda); renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); return; } var rm = e.target.closest('.ti-rm'); if (rm) { agenda.splice(+rm.getAttribute('data-rm'), 1); store.set('bp_agenda', agenda); renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); } }); } })();
+  (function () { 
+    var w = document.getElementById('agenda-wrap'); 
+    if (w) { 
+      w.addEventListener('click', function (e) { 
+        var a = e.target.closest('#ag-add'); 
+        if (a) { 
+          var date = document.getElementById('ag-date').value; 
+          var title = document.getElementById('ag-title').value; 
+          var type = document.getElementById('ag-type').value; 
+          var desc = document.getElementById('ag-desc').value; 
+          if (!title) { alert('Por favor, informe o título do evento.'); return; } 
+          if (!date) { var td = new Date(); date = td.getFullYear() + '-' + String(td.getMonth() + 1).padStart(2, '0') + '-' + String(td.getDate()).padStart(2, '0'); } 
+          agenda.push({ date: date, title: title, type: type, desc: desc }); 
+          store.set('bp_agenda', agenda); 
+
+          window.trackEvent('adicionar_evento_agenda', { titulo_evento: title, tipo: type, data_evento: date });
+
+          renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); return; 
+        } 
+        var rm = e.target.closest('.ti-rm'); 
+        if (rm) { agenda.splice(+rm.getAttribute('data-rm'), 1); store.set('bp_agenda', agenda); renderAgenda(); renderVisao(); if (document.getElementById('page-calendario').classList.contains('on')) renderCalendario(); flashSave(); } 
+      }); 
+    } 
+  })();
 
   var visaoWrap = document.getElementById('visao-wrap');
   if (visaoWrap) {
@@ -1352,7 +1180,32 @@ async function renderVisaoAvisosBanner() {
   function chip(nd, period) { var el = document.createElement('div'); el.className = 'optchip'; el.setAttribute('draggable', 'true'); el.setAttribute('data-id', nd.id); var bad = false, warn = ''; if (period !== null) { var rel = relatives(nd.id); rel.prereqs.forEach(function (prId) { var prNode = nodeOf(prId); if (!prNode) return; var satisfied = prNode.opt ? (plan[prId] !== undefined && plan[prId] < period) : (prNode.p < period); if (!satisfied) { bad = true; warn = 'Pré: ' + prNode.n + ' (' + prNode.p + 'º)'; } }); } if (bad) el.classList.add('bad'); el.innerHTML = '<span>' + nd.n + '<small> · ' + chOfOptNode(nd) + ' h/a</small>' + (bad ? '<div class="plan-warn">⚠ ' + warn + ' antes</div>' : '') + '</span>'; return el; }
   function updateColCh(p) { var sum = 0; optNodes().forEach(function (o) { if (plan[o.id] === p) sum += chOfOptNode(o); }); var el = document.getElementById('pch-' + p); if (el) el.textContent = sum + ' h/a planejadas'; }
   var dragId = null;
-  function attachDnD() { document.querySelectorAll('.optchip').forEach(function (c) { c.addEventListener('dragstart', function () { dragId = c.getAttribute('data-id'); c.classList.add('dragging'); }); c.addEventListener('dragend', function () { c.classList.remove('dragging'); }); }); document.querySelectorAll('.plan-col').forEach(function (col) { col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('over'); }); col.addEventListener('dragleave', function (e) { e.preventDefault(); col.classList.remove('over'); }); col.addEventListener('drop', function (e) { e.preventDefault(); col.classList.remove('over'); if (dragId === null) return; plan[dragId] = parseInt(col.getAttribute('data-p'), 10); store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); }); var pool = document.getElementById('plan-pool'); if (pool) { pool.addEventListener('dragover', function (e) { e.preventDefault(); }); pool.addEventListener('drop', function (e) { e.preventDefault(); if (dragId === null) return; delete plan[dragId]; store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); } }
+  function attachDnD() { 
+    document.querySelectorAll('.optchip').forEach(function (c) { c.addEventListener('dragstart', function () { dragId = c.getAttribute('data-id'); c.classList.add('dragging'); }); c.addEventListener('dragend', function () { c.classList.remove('dragging'); }); }); 
+    document.querySelectorAll('.plan-col').forEach(function (col) { 
+      col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('over'); }); 
+      col.addEventListener('dragleave', function (e) { e.preventDefault(); col.classList.remove('over'); }); 
+      col.addEventListener('drop', function (e) { 
+        e.preventDefault(); 
+        col.classList.remove('over'); 
+        if (dragId === null) return; 
+        var targetP = parseInt(col.getAttribute('data-p'), 10);
+        plan[dragId] = targetP; 
+        store.set('bp_plan', plan); 
+
+        window.trackEvent('arrastar_optativa_planejador', { optativa_id: dragId, periodo_destino: targetP });
+
+        dragId = null; 
+        renderPlanner(); 
+        flashSave(); 
+      }); 
+    }); 
+    var pool = document.getElementById('plan-pool'); 
+    if (pool) { 
+      pool.addEventListener('dragover', function (e) { e.preventDefault(); }); 
+      pool.addEventListener('drop', function (e) { e.preventDefault(); if (dragId === null) return; delete plan[dragId]; store.set('bp_plan', plan); dragId = null; renderPlanner(); flashSave(); }); 
+    } 
+  }
 
   /* ===== 16. CALENDÁRIO ACADÊMICO E EMENTAS KANBAN ===== */
   var calendarCurrentDate = new Date(2026, 7, 1);
@@ -1485,6 +1338,7 @@ async function renderVisaoAvisosBanner() {
     currentSlide = 1;
     updateSlideDisplay();
     if (onboardingOverlay) onboardingOverlay.classList.add('open');
+    window.trackEvent('onboarding_aberto', { categoria: 'Engajamento' });
   }
 
   function closeOnboarding(markAsSeen) {
@@ -1574,7 +1428,7 @@ async function renderVisaoAvisosBanner() {
     var pct = Math.min(100, Math.round((demoFaltas / 6) * 100));
     demoFaltasFill.style.width = pct + '%';
     if (demoFaltas > 5) { demoBadgeStatus.textContent = 'Reprovado por Falta'; demoBadgeStatus.className = 'badge bad'; }
-    else if (demoFaltas >= 4) { demoBadgeStatus.textContent = 'Atenção'; demoBadgeStatus.className = 'badge warn'; }
+    else if (demoFalta >= 4) { demoBadgeStatus.textContent = 'Atenção'; demoBadgeStatus.className = 'badge warn'; }
     else { demoBadgeStatus.textContent = 'Aprovado'; demoBadgeStatus.className = 'badge ok'; }
   }
 

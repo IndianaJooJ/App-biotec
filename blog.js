@@ -1,15 +1,3 @@
-// Rastreia abertura de artigos no BioBlog
-  function openPostModal(id) {
-    var posts = window._currentBlogPosts || [];
-    var post = posts.find(function (p) { return p.id === id; });
-    if (!post) return;
-
-    if (typeof window.trackEvent === 'function') {
-      window.trackEvent('ler_artigo_blog', { post_id: id, titulo: post.titulo, categoria: post.categoria });
-    }
-    // ... restante da função openPostModal
-  }
-
 /* ============================================================
    blog.js — BioBlog CEFET-MG (Modal + Comentários + Likes/Dislikes + Polling 10s)
    ============================================================ */
@@ -41,7 +29,6 @@ window.BP_BLOG = (function () {
     return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
   }
 
-  /* Registra a reação de Like ou Dislike evitando duplicidade local */
   async function reagirPost(postId, tipo) {
     if (!supabaseClient) return;
 
@@ -75,7 +62,6 @@ window.BP_BLOG = (function () {
     }
   }
 
-  /* Busca e exibe os artigos do BioBlog */
   async function fetchAndRenderPosts() {
     var container = document.getElementById('blog-feed-container');
     if (!container) return;
@@ -142,7 +128,6 @@ window.BP_BLOG = (function () {
     }
   }
 
-  /* Envio de novo artigo */
   async function submitNewPost(e) {
     e.preventDefault();
     var submitBtn = document.getElementById('btn-submit-blog');
@@ -188,13 +173,16 @@ window.BP_BLOG = (function () {
     if (dislikesElem) dislikesElem.textContent = post.dislikes || 0;
   }
 
-  /* Modal de Leitura */
   function openPostModal(id) {
     var posts = window._currentBlogPosts || [];
     var post = posts.find(function (p) { return p.id === id; });
     if (!post) return;
 
     activePostIdForComments = post.id;
+
+    if (typeof window.trackEvent === 'function') {
+      window.trackEvent('ler_artigo_blog', { post_id: id, titulo: post.titulo, categoria: post.categoria });
+    }
 
     var overlay = document.getElementById('blog-reader-modal-overlay');
     var titleElem = document.getElementById('blog-modal-title');
@@ -218,7 +206,6 @@ window.BP_BLOG = (function () {
     fetchAndRenderComments(post.id);
   }
 
-  /* Busca e renderiza os comentários do post */
   async function fetchAndRenderComments(postId) {
     var feed = document.getElementById('blog-comments-feed');
     if (!feed) return;
@@ -253,7 +240,6 @@ window.BP_BLOG = (function () {
     }
   }
 
-  /* Envio de novo comentário */
   async function submitComment(e) {
     e.preventDefault();
     if (!activePostIdForComments || !supabaseClient) return;
@@ -278,7 +264,6 @@ window.BP_BLOG = (function () {
     }
   }
 
-  /* SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA (POLLING A CADA 10s) */
   function startAutoRefresh() {
     stopAutoRefresh();
     autoRefreshTimer = setInterval(function () {
